@@ -1,0 +1,46 @@
+services:
+  web:
+    image: eladmin-web:2.7.0
+    networks:
+      eladmin-net:
+    ports:
+      - 80:80
+    depends_on:
+      - server
+
+  server:
+    image: eladmin-server:2.7.0
+    ports:
+      - 8000:8000
+    networks:
+      eladmin-net:
+    environment:
+      - DB_PWD=keyuan@520
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    volumes:
+      - eladmin-data:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=eladmin
+      - MYSQL_ROOT_PASSWORD=keyuan@520
+    networks:
+      eladmin-net:
+    ports:
+      - 3306:3306
+  redis:
+    image: redis:7.0
+    networks:
+      eladmin-net:
+    ports:
+      - 6379:6379
+volumes:
+  eladmin-data:
+networks:
+  eladmin-net:
