@@ -16,6 +16,7 @@
 package me.zhengjie.modules.keyuan.service.dto;
 
 import lombok.Data;
+import me.zhengjie.annotation.Query;
 
 /**
  * @author MrDevitt
@@ -24,4 +25,7 @@ import lombok.Data;
  **/
 @Data
 public class SysProjectDetailQueryCriteria {
+
+    @Query
+    private Long id;
 }

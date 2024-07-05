@@ -19,6 +19,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -77,10 +79,12 @@ public class SysProjectReceive implements Serializable {
     private Integer isDeleted;
 
     @Column(name = "`create_time`")
+    @CreationTimestamp
     @ApiModelProperty(value = "记录创建的时间")
     private Timestamp createTime;
 
     @Column(name = "`update_time`")
+    @UpdateTimestamp
     @ApiModelProperty(value = "记录修改的时间")
     private Timestamp updateTime;
 

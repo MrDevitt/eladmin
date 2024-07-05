@@ -16,7 +16,9 @@
 package me.zhengjie.modules.keyuan.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
 import me.zhengjie.modules.keyuan.domain.SysProjectReceive;
+import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectReceiveRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
@@ -35,9 +37,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author MrDevitt
@@ -51,6 +55,9 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
 
     private final SysProjectReceiveRepository sysProjectReceiveRepository;
     private final SysProjectReceiveMapper sysProjectReceiveMapper;
+
+    private final SysProjectDetailRepository sysProjectDetailRepository;
+
 
     @Override
     public PageResult<SysProjectReceiveDto> queryAll(SysProjectReceiveQueryCriteria criteria, Pageable pageable) {
@@ -75,6 +82,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectReceive resources) {
         sysProjectReceiveRepository.save(resources);
+        updateReceiveAmount(resources.getProjectId());
     }
 
     @Override
@@ -84,13 +92,20 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         ValidationUtil.isNull(sysProjectReceive.getId(), "SysProjectReceive", "id", resources.getId());
         sysProjectReceive.copy(resources);
         sysProjectReceiveRepository.save(sysProjectReceive);
+        updateReceiveAmount(resources.getProjectId());
     }
 
     @Override
     public void deleteAll(Long[] ids) {
+        Set<Long> projectIdSet = new HashSet<>();
         for (Long id : ids) {
+            long projectId = sysProjectReceiveRepository.findById(id)
+                    .map(SysProjectReceive::getProjectId)
+                    .orElse(-1L);
+            projectIdSet.add(projectId);
             sysProjectReceiveRepository.deleteById(id);
         }
+        projectIdSet.forEach(this::updateReceiveAmount);
     }
 
     @Override
@@ -109,5 +124,16 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
             list.add(map);
         }
         FileUtil.downloadExcel(list, response);
+    }
+
+    private void updateReceiveAmount(long projectId) {
+        SysProjectDetail sysProjectDetail = sysProjectDetailRepository.findById(projectId).orElse(null);
+        if (sysProjectDetail == null) {
+            return;
+        }
+        List<SysProjectReceiveDto> receiveDtoList = queryAll(new SysProjectReceiveQueryCriteria(projectId));
+        int totalReceive = receiveDtoList.stream().mapToInt(SysProjectReceiveDto::getReceiveAmount).sum();
+        sysProjectDetail.setReceiveAmount(totalReceive);
+        sysProjectDetailRepository.save(sysProjectDetail);
     }
 }

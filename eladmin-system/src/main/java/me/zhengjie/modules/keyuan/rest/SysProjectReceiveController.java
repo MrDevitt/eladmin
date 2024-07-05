@@ -18,6 +18,7 @@ package me.zhengjie.modules.keyuan.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectReceive;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
@@ -45,6 +46,7 @@ import java.io.IOException;
  * @website https://eladmin.vip
  * @date 2024-07-03
  **/
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @Api(tags = "项目收款信息管理")
@@ -66,6 +68,7 @@ public class SysProjectReceiveController {
     @ApiOperation("查询项目收款信息")
     @PreAuthorize("@el.check('sysProjectReceive:list')")
     public ResponseEntity<PageResult<SysProjectReceiveDto>> querySysProjectReceive(SysProjectReceiveQueryCriteria criteria, Pageable pageable) {
+        log.info(criteria.toString());
         return new ResponseEntity<>(sysProjectReceiveService.queryAll(criteria, pageable), HttpStatus.OK);
     }
 

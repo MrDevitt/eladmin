@@ -15,7 +15,9 @@
  */
 package me.zhengjie.modules.keyuan.service.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import me.zhengjie.annotation.Query;
 
 /**
  * @author MrDevitt
@@ -23,5 +25,8 @@ import lombok.Data;
  * @date 2024-07-03
  **/
 @Data
+@AllArgsConstructor
 public class SysProjectReceiveQueryCriteria {
+    @Query
+    private Long projectId;
 }
