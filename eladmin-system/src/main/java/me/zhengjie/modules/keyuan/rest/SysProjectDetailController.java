@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
+import me.zhengjie.modules.keyuan.domain.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
@@ -66,7 +68,16 @@ public class SysProjectDetailController {
     @ApiOperation("查询项目明细")
     @PreAuthorize("@el.check('sysProjectDetail:list')")
     public ResponseEntity<PageResult<SysProjectDetailDto>> querySysProjectDetail(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
-        return new ResponseEntity<>(sysProjectDetailService.queryAll(criteria, pageable), HttpStatus.OK);
+        PageResult<SysProjectDetailDto> res = sysProjectDetailService.queryAll(criteria, pageable);
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/statistics")
+    @Log("查询项目统计数据")
+    @ApiOperation("查询项目统计数据")
+    @PreAuthorize("@el.check('sysProjectDetail:list')")
+    public ResponseEntity<SysProjectStatistics> querySysProjectStatistics(@RequestParam long endTime) {
+        return new ResponseEntity<>(sysProjectDetailService.getSysProjectStatisticsInfo(endTime), HttpStatus.OK);
     }
 
     @PostMapping

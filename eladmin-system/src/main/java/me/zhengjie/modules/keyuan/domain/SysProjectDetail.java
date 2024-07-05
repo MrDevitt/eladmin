@@ -60,6 +60,11 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "项目名")
     private String projectName;
 
+    @Column(name = "`project_region`", nullable = false)
+    @NotBlank
+    @ApiModelProperty(value = "项目地址")
+    private String projectRegion;
+
     @Column(name = "`party_a`", nullable = false)
     @NotBlank
     @ApiModelProperty(value = "甲方名称")
@@ -80,10 +85,10 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "合同金额")
     private Integer contractAmount;
 
-    @Column(name = "`contact_time`", nullable = false)
+    @Column(name = "`contract_time`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "签订时间")
-    private Timestamp contactTime;
+    private Timestamp contractTime;
 
     @Column(name = "`project_start_time`")
     @ApiModelProperty(value = "开工时间")

@@ -18,6 +18,8 @@ package me.zhengjie.modules.keyuan.service.dto;
 import lombok.Data;
 import me.zhengjie.annotation.Query;
 
+import java.sql.Timestamp;
+
 /**
  * @author MrDevitt
  * @website https://eladmin.vip
@@ -28,4 +30,10 @@ public class SysProjectDetailQueryCriteria {
 
     @Query
     private Long id;
+
+    @Query(propName = "contractTime", type = Query.Type.LESS_THAN)
+    private Timestamp endContractTime;
+
+    @Query(propName = "contractTime", type = Query.Type.GREATER_THAN)
+    private Timestamp beginContractTime;
 }

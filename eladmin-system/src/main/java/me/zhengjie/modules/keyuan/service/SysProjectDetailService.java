@@ -16,6 +16,7 @@
 package me.zhengjie.modules.keyuan.service;
 
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
+import me.zhengjie.modules.keyuan.domain.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.utils.PageResult;
@@ -87,4 +88,6 @@ public interface SysProjectDetailService {
      * @throws IOException /
      */
     void download(List<SysProjectDetailDto> all, HttpServletResponse response) throws IOException;
+
+    SysProjectStatistics getSysProjectStatisticsInfo(long end);
 }

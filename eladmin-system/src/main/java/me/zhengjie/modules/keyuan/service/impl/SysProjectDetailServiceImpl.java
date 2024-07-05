@@ -18,6 +18,7 @@ package me.zhengjie.modules.keyuan.service.impl;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.exception.EntityExistException;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
+import me.zhengjie.modules.keyuan.domain.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
@@ -35,7 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +122,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             map.put("乙方名称", sysProjectDetail.getPartyB());
             map.put("合同编号", sysProjectDetail.getContractNumber());
             map.put("合同金额", sysProjectDetail.getContractAmount());
-            map.put("签订时间", sysProjectDetail.getContactTime());
+            map.put("签订时间", sysProjectDetail.getContractTime());
             map.put("开工时间", sysProjectDetail.getProjectStartTime());
             map.put("竣工时间", sysProjectDetail.getProjectFinishTime());
             map.put("业务人员", sysProjectDetail.getSalesPerson());
@@ -138,5 +142,45 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             list.add(map);
         }
         FileUtil.downloadExcel(list, response);
+    }
+
+    @Override
+    public SysProjectStatistics getSysProjectStatisticsInfo(long end) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.MONTH, 0);
+        calendar.set(Calendar.DAY_OF_MONTH, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return getSysProjectStatisticsInfo(calendar.getTimeInMillis(), end);
+    }
+
+    private SysProjectStatistics getSysProjectStatisticsInfo(long begin, long end) {
+        SysProjectDetailQueryCriteria criteria = new SysProjectDetailQueryCriteria();
+        criteria.setBeginContractTime(new Timestamp(begin));
+        criteria.setEndContractTime(new Timestamp(end));
+        List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(criteria);
+        SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
+        for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
+            buildContractStatistics(sysProjectStatistics, detailDto);
+        }
+        return sysProjectStatistics;
+    }
+
+    private static void buildContractStatistics(SysProjectStatistics sysProjectStatistics, SysProjectDetailDto detailDto) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(detailDto.getContractTime().getTime());
+        int month = calendar.get(Calendar.MONTH);
+
+        Map<String, long[]> typeMap = sysProjectStatistics.getContractByTypeAndRegion().computeIfAbsent(detailDto.getProjectType(), k -> new HashMap<>());
+        long[] regionMonthData = typeMap.computeIfAbsent(detailDto.getProjectRegion(), k -> new long[13]);
+        regionMonthData[month] += detailDto.getContractAmount();
+        regionMonthData[12] += detailDto.getContractAmount();
+
+        Map<Integer, long[]> personMap = sysProjectStatistics.getContractByPersonAndType().computeIfAbsent(detailDto.getSalesPerson(), k -> new HashMap<>());
+        long[] typeMonthData = personMap.computeIfAbsent(detailDto.getProjectType(), k -> new long[13]);
+        typeMonthData[month] += detailDto.getContractAmount();
+        typeMonthData[12] += detailDto.getContractAmount();
     }
 }

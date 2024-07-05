@@ -42,6 +42,11 @@ public class SysProjectDetailDto implements Serializable {
     private String projectName;
 
     /**
+     * 项目地址
+     */
+    private String projectRegion;
+
+    /**
      * 甲方名称
      */
     private String partyA;
@@ -64,7 +69,7 @@ public class SysProjectDetailDto implements Serializable {
     /**
      * 签订时间
      */
-    private Timestamp contactTime;
+    private Timestamp contractTime;
 
     /**
      * 开工时间
