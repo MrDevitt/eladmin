@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
@@ -76,8 +75,8 @@ public class SysProjectDetailController {
     @Log("查询项目统计数据")
     @ApiOperation("查询项目统计数据")
     @PreAuthorize("@el.check('sysProjectDetail:list')")
-    public ResponseEntity<SysProjectStatistics> querySysProjectStatistics(@RequestParam long endTime) {
-        return new ResponseEntity<>(sysProjectDetailService.getSysProjectStatisticsInfo(endTime), HttpStatus.OK);
+    public ResponseEntity<SysProjectStatistics> querySysProjectStatistics() {
+        return new ResponseEntity<>(sysProjectDetailService.getSysProjectStatisticsInfo(), HttpStatus.OK);
     }
 
     @PostMapping

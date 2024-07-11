@@ -36,4 +36,16 @@ public class SysProjectDetailQueryCriteria {
 
     @Query(propName = "contractTime", type = Query.Type.GREATER_THAN)
     private Timestamp beginContractTime;
+
+    /**
+     * 模糊
+     */
+    @Query(type = Query.Type.INNER_LIKE)
+    private String projectName;
+
+    /**
+     * 模糊
+     */
+    @Query(type = Query.Type.INNER_LIKE)
+    private Long salesPerson;
 }

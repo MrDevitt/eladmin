@@ -1,4 +1,4 @@
-FROM openjdk:8-jre
+FROM openjdk:11-jre
 ARG JAR_FILE=./eladmin-system/target/eladmin-system-2.7.jar
 COPY ${JAR_FILE} app.jar
 RUN ls -lh

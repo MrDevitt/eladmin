@@ -1,6 +1,6 @@
 services:
   web:
-    image: eladmin-web:2.7.0
+    image: eladmin-web:2.7.1
     networks:
       eladmin-net:
     ports:
@@ -9,7 +9,7 @@ services:
       - server
 
   server:
-    image: eladmin-server:2.7.0
+    image: eladmin-server:2.7.1
     ports:
       - 8000:8000
     networks:

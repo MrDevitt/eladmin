@@ -89,5 +89,5 @@ public interface SysProjectDetailService {
      */
     void download(List<SysProjectDetailDto> all, HttpServletResponse response) throws IOException;
 
-    SysProjectStatistics getSysProjectStatisticsInfo(long end);
+    SysProjectStatistics getSysProjectStatisticsInfo();
 }

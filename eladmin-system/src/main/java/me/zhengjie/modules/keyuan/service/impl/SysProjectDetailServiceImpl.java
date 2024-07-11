@@ -24,6 +24,7 @@ import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
+import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
@@ -145,8 +146,9 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
     }
 
     @Override
-    public SysProjectStatistics getSysProjectStatisticsInfo(long end) {
+    public SysProjectStatistics getSysProjectStatisticsInfo() {
         Calendar calendar = Calendar.getInstance();
+        long end = calendar.getTimeInMillis();
         calendar.set(Calendar.MONTH, 0);
         calendar.set(Calendar.DAY_OF_MONTH, 0);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -158,29 +160,27 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
 
     private SysProjectStatistics getSysProjectStatisticsInfo(long begin, long end) {
         SysProjectDetailQueryCriteria criteria = new SysProjectDetailQueryCriteria();
-        criteria.setBeginContractTime(new Timestamp(begin));
         criteria.setEndContractTime(new Timestamp(end));
         List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(criteria);
         SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
         for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
             buildContractStatistics(sysProjectStatistics, detailDto);
         }
+        sysProjectStatistics.calcInnerData();
         return sysProjectStatistics;
     }
 
     private static void buildContractStatistics(SysProjectStatistics sysProjectStatistics, SysProjectDetailDto detailDto) {
+        double contractAmount = ProjectUtils.dbPriceToRealPrice(detailDto.getContractAmount());
+
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(detailDto.getContractTime().getTime());
         int month = calendar.get(Calendar.MONTH);
+        String year = String.valueOf(calendar.get(Calendar.YEAR));
 
-        Map<String, long[]> typeMap = sysProjectStatistics.getContractByTypeAndRegion().computeIfAbsent(detailDto.getProjectType(), k -> new HashMap<>());
-        long[] regionMonthData = typeMap.computeIfAbsent(detailDto.getProjectRegion(), k -> new long[13]);
-        regionMonthData[month] += detailDto.getContractAmount();
-        regionMonthData[12] += detailDto.getContractAmount();
-
-        Map<Integer, long[]> personMap = sysProjectStatistics.getContractByPersonAndType().computeIfAbsent(detailDto.getSalesPerson(), k -> new HashMap<>());
-        long[] typeMonthData = personMap.computeIfAbsent(detailDto.getProjectType(), k -> new long[13]);
-        typeMonthData[month] += detailDto.getContractAmount();
-        typeMonthData[12] += detailDto.getContractAmount();
+        Map<String, double[]> typeMap = sysProjectStatistics.getContractByYearAndType().computeIfAbsent(year, k -> new HashMap<>());
+        double[] typeMonthData = typeMap.computeIfAbsent(ProjectUtils.projectTypeToName(detailDto.getProjectType()), k -> new double[13]);
+        typeMonthData[month] += contractAmount;
+        typeMonthData[12] += contractAmount;
     }
 }
