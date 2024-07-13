@@ -24,7 +24,7 @@ import java.sql.Timestamp;
  * @author MrDevitt
  * @website https://eladmin.vip
  * @description /
- * @date 2024-04-04
+ * @date 2024-07-13
  **/
 @Data
 public class SysProjectDetailDto implements Serializable {
@@ -36,99 +36,52 @@ public class SysProjectDetailDto implements Serializable {
      */
     private Integer projectType;
 
-    /**
-     * 项目名
-     */
+    /** 项目名 */
     private String projectName;
 
-    /**
-     * 项目地址
-     */
-    private String projectRegion;
-
-    /**
-     * 甲方名称
-     */
+    /** 甲方名称 */
     private String partyA;
 
-    /**
-     * 乙方名称
-     */
+    /** 乙方名称 */
     private String partyB;
 
-    /**
-     * 合同编号
-     */
+    /** 合同编号 */
     private String contractNumber;
 
-    /**
-     * 合同金额
-     */
+    /** 合同金额 */
     private Integer contractAmount;
 
-    /**
-     * 签订时间
-     */
-    private Timestamp contractTime;
-
-    /**
-     * 开工时间
-     */
+    /** 开工时间 */
     private Timestamp projectStartTime;
 
-    /**
-     * 竣工时间
-     */
+    /** 竣工时间 */
     private Timestamp projectFinishTime;
 
-    /**
-     * 业务人员
-     */
+    /** 业务人员 */
     private Long salesPerson;
 
-    /**
-     * 技术人员
-     */
+    /** 技术人员 */
     private Long technicalPerson;
 
-    /**
-     * 甲方负责人
-     */
+    /** 甲方负责人 */
     private Long partyAPerson;
 
-    /**
-     * 甲方领导
-     */
-    private Long partyALeader;
-
-    /**
-     * 发票类型 0-专票，1-普票
-     */
+    /** 发票类型 0-专票，1-普票 */
     private Integer invoiceType;
 
-    /**
-     * 备注
-     */
+    /** 备注 */
     private String remark;
 
-    /**
-     * 业务中心百分比
-     */
+    /** 业务中心百分比 */
     private Integer salesPercent;
 
-    /**
-     * 技术中心百分比
-     */
+    /** 技术中心百分比 */
     private Integer technicalPercent;
 
-    /**
-     * 管理中心百分比
-     */
+    /** 管理中心百分比 */
     private Integer managementPercent;
 
-    /**
-     * 总裁办百分比
-     */
+    /** 总裁办百分比 */
     private Integer presidentPercent;
 
     /**
@@ -150,4 +103,31 @@ public class SysProjectDetailDto implements Serializable {
      * 记录修改的时间
      */
     private Timestamp updateTime;
+
+    private String projectRegion;
+
+    /**
+     * 签订时间
+     */
+    private Timestamp contractTime;
+
+    /**
+     * 合同收到时间
+     */
+    private Timestamp contractReceiveTime;
+
+    /**
+     * 合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付
+     */
+    private Integer contractPayWay;
+
+    /**
+     * 应收款金额
+     */
+    private Integer shouldReceiveAmount;
+
+    /**
+     * 项目进度
+     */
+    private Integer projectProgress;
 }

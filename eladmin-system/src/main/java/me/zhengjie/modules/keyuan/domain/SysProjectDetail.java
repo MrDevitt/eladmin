@@ -37,7 +37,7 @@ import java.sql.Timestamp;
  * @author MrDevitt
  * @website https://eladmin.vip
  * @description /
- * @date 2024-04-04
+ * @date 2024-07-13
  **/
 @Entity
 @Data
@@ -60,11 +60,6 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "项目名")
     private String projectName;
 
-    @Column(name = "`project_region`", nullable = false)
-    @NotBlank
-    @ApiModelProperty(value = "项目地址")
-    private String projectRegion;
-
     @Column(name = "`party_a`", nullable = false)
     @NotBlank
     @ApiModelProperty(value = "甲方名称")
@@ -84,11 +79,6 @@ public class SysProjectDetail implements Serializable {
     @NotNull
     @ApiModelProperty(value = "合同金额")
     private Integer contractAmount;
-
-    @Column(name = "`contract_time`", nullable = false)
-    @NotNull
-    @ApiModelProperty(value = "签订时间")
-    private Timestamp contractTime;
 
     @Column(name = "`project_start_time`")
     @ApiModelProperty(value = "开工时间")
@@ -111,10 +101,6 @@ public class SysProjectDetail implements Serializable {
     @Column(name = "`party_a_person`")
     @ApiModelProperty(value = "甲方负责人")
     private Long partyAPerson;
-
-    @Column(name = "`party_a_leader`")
-    @ApiModelProperty(value = "甲方领导")
-    private Long partyALeader;
 
     @Column(name = "`invoice_type`", nullable = false)
     @NotNull
@@ -163,11 +149,39 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "记录修改的时间")
     private Timestamp updateTime;
 
+    @Column(name = "`project_region`", nullable = false)
+    @NotBlank
+    @ApiModelProperty(value = "projectRegion")
+    private String projectRegion;
+
+    @Column(name = "`contract_time`", nullable = false)
+    @NotNull
+    @ApiModelProperty(value = "签订时间")
+    private Timestamp contractTime;
+
+    @Column(name = "`contract_receive_time`")
+    @ApiModelProperty(value = "合同收到时间")
+    private Timestamp contractReceiveTime;
+
+    @Column(name = "`contract_pay_way`", nullable = false)
+    @NotNull
+    @ApiModelProperty(value = "合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付")
+    private Integer contractPayWay;
+
+    @Column(name = "`should_receive_amount`")
+    @ApiModelProperty(value = "应收款金额")
+    private Integer shouldReceiveAmount;
+
+    @Column(name = "`project_progress`", nullable = false)
+    @NotNull
+    @ApiModelProperty(value = "项目进度")
+    private Integer projectProgress;
+
     public void copy(SysProjectDetail source) {
         BeanUtil.copyProperties(source, this, CopyOptions.create().setIgnoreNullValue(true));
     }
 
     public int totalPercentage() {
-        return salesPercent + technicalPercent + managementPercent + presidentPercent;
+        return presidentPercent + salesPercent + managementPercent + technicalPercent;
     }
 }

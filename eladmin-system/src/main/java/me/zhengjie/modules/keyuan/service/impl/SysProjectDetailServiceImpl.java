@@ -123,13 +123,11 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             map.put("乙方名称", sysProjectDetail.getPartyB());
             map.put("合同编号", sysProjectDetail.getContractNumber());
             map.put("合同金额", sysProjectDetail.getContractAmount());
-            map.put("签订时间", sysProjectDetail.getContractTime());
             map.put("开工时间", sysProjectDetail.getProjectStartTime());
             map.put("竣工时间", sysProjectDetail.getProjectFinishTime());
             map.put("业务人员", sysProjectDetail.getSalesPerson());
             map.put("技术人员", sysProjectDetail.getTechnicalPerson());
             map.put("甲方负责人", sysProjectDetail.getPartyAPerson());
-            map.put("甲方领导", sysProjectDetail.getPartyALeader());
             map.put("发票类型 0-专票，1-普票", sysProjectDetail.getInvoiceType());
             map.put("备注", sysProjectDetail.getRemark());
             map.put("业务中心百分比", sysProjectDetail.getSalesPercent());
@@ -140,6 +138,12 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             map.put("0-未删除，1-已删除", sysProjectDetail.getIsDeleted());
             map.put("记录创建的时间", sysProjectDetail.getCreateTime());
             map.put("记录修改的时间", sysProjectDetail.getUpdateTime());
+            map.put(" projectRegion", sysProjectDetail.getProjectRegion());
+            map.put("签订时间", sysProjectDetail.getContractTime());
+            map.put("合同收到时间", sysProjectDetail.getContractReceiveTime());
+            map.put("合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付", sysProjectDetail.getContractPayWay());
+            map.put("应收款金额", sysProjectDetail.getShouldReceiveAmount());
+            map.put("项目进度", sysProjectDetail.getProjectProgress());
             list.add(map);
         }
         FileUtil.downloadExcel(list, response);
