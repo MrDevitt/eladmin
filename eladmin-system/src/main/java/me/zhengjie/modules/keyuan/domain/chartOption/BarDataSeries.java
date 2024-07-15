@@ -8,6 +8,8 @@ import java.util.List;
 
 @Data
 public class BarDataSeries implements DataSeries {
+
+    public static final BarDataSeries instance = new BarDataSeries(new double[12]);
     private List<SeriesData> data = new ArrayList<>();
 
     public BarDataSeries(double[] data) {
