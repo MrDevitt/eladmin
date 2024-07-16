@@ -1,4 +1,4 @@
-package me.zhengjie.modules.keyuan.domain.chartOption;
+package me.zhengjie.modules.keyuan.domain.statistics.chartOption;
 
 import lombok.Data;
 

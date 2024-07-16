@@ -48,4 +48,10 @@ public class SysProjectDetailQueryCriteria {
      */
     @Query(type = Query.Type.INNER_LIKE)
     private Long salesPerson;
+
+    @Query
+    private Integer projectType;
+
+    @Query
+    private String projectRegion;
 }

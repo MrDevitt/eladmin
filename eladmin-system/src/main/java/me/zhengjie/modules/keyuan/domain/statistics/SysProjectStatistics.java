@@ -1,14 +1,16 @@
-package me.zhengjie.modules.keyuan.domain;
+package me.zhengjie.modules.keyuan.domain.statistics;
 
 import lombok.Data;
-import me.zhengjie.modules.keyuan.domain.chartOption.BarDataSeries;
-import me.zhengjie.modules.keyuan.domain.chartOption.BarOptionSeries;
-import me.zhengjie.modules.keyuan.domain.chartOption.ChartOption;
-import me.zhengjie.modules.keyuan.domain.chartOption.DataSeries;
-import me.zhengjie.modules.keyuan.domain.chartOption.Option;
-import me.zhengjie.modules.keyuan.domain.chartOption.PieDataSeries;
-import me.zhengjie.modules.keyuan.domain.chartOption.PieOptionSeries;
-import me.zhengjie.modules.keyuan.domain.chartOption.SeriesData;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.BarDataSeries;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.BarOptionSeries;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.ChartOption;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.DataSeries;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.Option;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.PieDataSeries;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.PieOptionSeries;
+import me.zhengjie.modules.keyuan.domain.statistics.chartOption.SeriesData;
+import me.zhengjie.modules.keyuan.domain.statistics.table.TableData;
+import me.zhengjie.modules.keyuan.domain.statistics.table.TableOption;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 
 import java.util.ArrayList;
@@ -30,9 +32,17 @@ public class SysProjectStatistics {
     ChartOption receiveChartOption = new ChartOption();
     Map<String, Double> receiveTotalByType = new HashMap<>();
 
+    Map<String, Map<String, double[]>> contractByTypeAndRegion = new HashMap<>();
+    List<TableOption> contractByRegionTableList = new ArrayList<>();
+    Map<String, Map<String, double[]>> contractByTypeAndPerson = new HashMap<>();
+    List<TableOption> contractByPersonTableList = new ArrayList<>();
+
+
     public void calcInnerData() {
         buildOptionAndTotal(contractByYearAndType, contractChartOption, contractTotalByType, "业务量指标");
         buildOptionAndTotal(receiveByYearAndType, receiveChartOption, receiveTotalByType, "收款指标");
+        buildTableFromMap(contractByRegionTableList, contractByTypeAndRegion, "地区");
+        buildTableFromMap(contractByPersonTableList, contractByTypeAndPerson, "业务人");
     }
 
     private void buildOptionAndTotal(
@@ -70,4 +80,13 @@ public class SysProjectStatistics {
         chartOption.getBaseOption().getSeries().add(new PieOptionSeries());
     }
 
+    private void buildTableFromMap(List<TableOption> tableList, Map<String, Map<String, double[]>> dataMap, String column1Name) {
+        Arrays.stream(ProjectUtils.PROJECT_TYPE_NAMES).forEach(e -> tableList.add(new TableOption(e, column1Name)));
+        for (TableOption tableOption : tableList) {
+            Map<String, double[]> detailMap = dataMap.get(tableOption.getLabel());
+            for (Map.Entry<String, double[]> entry : detailMap.entrySet()) {
+                tableOption.getData().add(new TableData(entry.getKey(), entry.getValue()));
+            }
+        }
+    }
 }

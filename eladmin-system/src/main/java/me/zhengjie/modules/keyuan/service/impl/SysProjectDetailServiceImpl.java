@@ -19,12 +19,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.exception.EntityExistException;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
-import me.zhengjie.modules.keyuan.domain.SysProjectStatistics;
+import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectReceiveRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
+import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
@@ -43,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,6 +74,8 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
     private final SysProjectReceiveRepository sysProjectReceiveRepository;
 
     private final SysProjectReceiveMapper sysProjectReceiveMapper;
+
+    private final SysProjectPersonService projectPersonService;
 
     @Override
     public PageResult<SysProjectDetailDto> queryAll(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
@@ -172,7 +178,13 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
     public SysProjectStatistics getSysProjectStatisticsInfo() {
         SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
         List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(new SysProjectDetailQueryCriteria());
-        buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList);
+        List<SysProjectPersonDto> sysProjectPersonDtoList = projectPersonService.queryAll(new SysProjectPersonQueryCriteria());
+        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
+                SysProjectPersonDto::getId,
+                Function.identity(),
+                (x, y) -> x
+        ));
+        buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap);
 
         Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailDtoList.stream().collect(Collectors.toMap(
                 SysProjectDetailDto::getId,
@@ -186,9 +198,17 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         return sysProjectStatistics;
     }
 
-    private static void buildContractStatistics(SysProjectStatistics sysProjectStatistics, List<SysProjectDetailDto> sysProjectDetailDtoList) {
+    private static void buildContractStatistics(
+            SysProjectStatistics sysProjectStatistics,
+            List<SysProjectDetailDto> sysProjectDetailDtoList,
+            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap) {
+        String currentYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+        Arrays.stream(ProjectUtils.PROJECT_TYPE_NAMES).forEach(e -> sysProjectStatistics.getContractByTypeAndRegion().put(e, new HashMap<>()));
+        Arrays.stream(ProjectUtils.PROJECT_TYPE_NAMES).forEach(e -> sysProjectStatistics.getContractByTypeAndPerson().put(e, new HashMap<>()));
+
         for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
             double contractAmount = ProjectUtils.dbPriceToRealPrice(detailDto.getContractAmount());
+            String projectType = ProjectUtils.projectTypeToName(detailDto.getProjectType());
 
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(detailDto.getContractTime().getTime());
@@ -196,9 +216,23 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             String year = String.valueOf(calendar.get(Calendar.YEAR));
 
             Map<String, double[]> typeMap = sysProjectStatistics.getContractByYearAndType().computeIfAbsent(year, k -> new HashMap<>());
-            double[] typeMonthData = typeMap.computeIfAbsent(ProjectUtils.projectTypeToName(detailDto.getProjectType()), k -> new double[13]);
+            double[] typeMonthData = typeMap.computeIfAbsent(projectType, k -> new double[13]);
             typeMonthData[month] += contractAmount;
             typeMonthData[12] += contractAmount;
+
+            if (currentYear.equals(year)) {
+                Map<String, double[]> regionMap = sysProjectStatistics.getContractByTypeAndRegion().get(projectType);
+                double[] regionData = regionMap.computeIfAbsent(detailDto.getProjectRegion(), k -> new double[13]);
+                regionData[month] += contractAmount;
+                regionData[12] += contractAmount;
+
+                String personName = sysProjectPersonDtoMap.get(detailDto.getSalesPerson()).getName();
+                Map<String, double[]> personMap = sysProjectStatistics.getContractByTypeAndPerson().get(projectType);
+                double[] personData = personMap.computeIfAbsent(personName, k -> new double[13]);
+                personData[month] += contractAmount;
+                personData[12] += contractAmount;
+            }
+
         }
     }
 
