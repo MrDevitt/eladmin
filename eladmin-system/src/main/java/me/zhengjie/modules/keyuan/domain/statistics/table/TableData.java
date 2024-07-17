@@ -1,11 +1,11 @@
 package me.zhengjie.modules.keyuan.domain.statistics.table;
 
 import lombok.Data;
+import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 
 @Data
 public class TableData {
     private String name;
-    private double[] yearData;
     private double month1;
     private double month2;
     private double month3;
@@ -22,18 +22,19 @@ public class TableData {
 
     public TableData(String name, double[] data) {
         this.name = name;
-        month1 = data[0];
-        month2 = data[1];
-        month3 = data[2];
-        month4 = data[3];
-        month5 = data[4];
-        month6 = data[5];
-        month7 = data[6];
-        month8 = data[7];
-        month9 = data[8];
-        month10 = data[9];
-        month11 = data[10];
-        month12 = data[11];
-        year = data[12];
+        month1 = ProjectUtils.roundFix2(data[0]);
+        month2 = ProjectUtils.roundFix2(data[1]);
+        month3 = ProjectUtils.roundFix2(data[2]);
+        month4 = ProjectUtils.roundFix2(data[3]);
+        month5 = ProjectUtils.roundFix2(data[4]);
+        month6 = ProjectUtils.roundFix2(data[5]);
+        month7 = ProjectUtils.roundFix2(data[6]);
+        month8 = ProjectUtils.roundFix2(data[7]);
+        month9 = ProjectUtils.roundFix2(data[8]);
+        month10 = ProjectUtils.roundFix2(data[9]);
+        month11 = ProjectUtils.roundFix2(data[10]);
+        month12 = ProjectUtils.roundFix2(data[11]);
+        year = ProjectUtils.roundFix2(data[12]);
     }
+
 }
