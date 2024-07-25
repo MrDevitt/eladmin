@@ -76,6 +76,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
 
     private final SysProjectPersonService projectPersonService;
 
+
     @Override
     public PageResult<SysProjectDetailDto> queryAll(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
         Page<SysProjectDetail> page = sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder), pageable);
