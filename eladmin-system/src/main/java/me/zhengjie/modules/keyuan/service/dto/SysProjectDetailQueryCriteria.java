@@ -19,6 +19,7 @@ import lombok.Data;
 import me.zhengjie.annotation.Query;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * @author MrDevitt
@@ -54,4 +55,7 @@ public class SysProjectDetailQueryCriteria {
 
     @Query
     private String projectRegion;
+
+    @Query(type = Query.Type.BETWEEN)
+    private List<Timestamp> createTime;
 }

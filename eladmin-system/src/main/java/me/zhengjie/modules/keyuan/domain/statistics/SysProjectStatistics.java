@@ -73,6 +73,8 @@ public class SysProjectStatistics {
         buildTableFromMap(receiveByPersonTableList, receiveByTypeAndPerson, "业务人");
         buildTableFromMap(receiveByDepartmentTableList, receiveByTypeAndDepartment, "部门");
         buildTableFromMap(receiveShareByPersonTableList, receiveShareByTypeAndPerson, "业务人");
+
+        clear();
     }
 
     private void buildOptionAndTotal(
@@ -133,5 +135,19 @@ public class SysProjectStatistics {
             totalOption.getData().add(new TableData(entry.getKey(), entry.getValue()));
         }
         tableList.add(totalOption);
+    }
+
+    private void clear() {
+        contractByYearAndType.clear();
+        contractByTypeAndRegion.clear();
+        contractByTypeAndPerson.clear();
+        contractByTypeAndDepartment.clear();
+        contractShareByTypeAndPerson.clear();
+
+        receiveByYearAndType.clear();
+        receiveByTypeAndRegion.clear();
+        receiveByTypeAndPerson.clear();
+        receiveByTypeAndDepartment.clear();
+        receiveShareByTypeAndPerson.clear();
     }
 }

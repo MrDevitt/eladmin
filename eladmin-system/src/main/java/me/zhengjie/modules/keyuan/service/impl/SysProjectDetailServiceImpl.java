@@ -202,7 +202,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             SysProjectStatistics sysProjectStatistics,
             List<SysProjectDetailDto> sysProjectDetailDtoList,
             Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap) {
-        String currentYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+        String currentYear = getLastMonthYear();
         for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
             double contractAmount = ProjectUtils.dbPriceToRealPrice(detailDto.getContractAmount());
             String projectType = ProjectUtils.projectTypeToName(detailDto.getProjectType());
@@ -268,7 +268,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             List<SysProjectReceiveDto> sysProjectReceiveDtoList,
             Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap,
             Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap) {
-        String currentYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+        String currentYear = getLastMonthYear();
         for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoList) {
             double receiveAmount = ProjectUtils.dbPriceToRealPrice(receiveDto.getReceiveAmount());
             SysProjectDetailDto detailDto = sysProjectDetailDtoMap.get(receiveDto.getProjectId());
@@ -309,5 +309,11 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
                 personShareData[12] += receiveAmount * detailDto.getSalesPercent() / 100;
             }
         }
+    }
+
+    private static String getLastMonthYear() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, -1);
+        return String.valueOf(calendar.get(Calendar.YEAR));
     }
 }
