@@ -7,10 +7,13 @@ import java.util.Map;
 public class ProjectUtils {
     private static final String[] MONTH_NAMES = new String[]{"一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"};
     public static final String[] PROJECT_TYPE_NAMES = new String[]{"检测", "监理", "设计", "其他"};
+    public static final String[] PROJECT_EXAM_REGIONS = new String[]{"日喀则", "拉萨", "阿里", "那曲"};
     public static final String PROJECT_DEPARTMENT_PRESIDENT = "总裁办";
     public static final String PROJECT_DEPARTMENT_MANAGEMENT = "管理中心";
     public static final String PROJECT_DEPARTMENT_SALES = "业务中心";
     public static final String PROJECT_DEPARTMENT_TECH = "技术中心";
+
+    public static final int PROJECT_TYPE_EXAM = 0;
 
     public static String projectTypeToName(int typeId) {
         return PROJECT_TYPE_NAMES[typeId];
@@ -42,6 +45,12 @@ public class ProjectUtils {
     public static Map<String, Map<String, double[]>> generateTypeMap() {
         Map<String, Map<String, double[]>> map = new HashMap<>();
         Arrays.stream(ProjectUtils.PROJECT_TYPE_NAMES).forEach(e -> map.put(e, new HashMap<>()));
+        return map;
+    }
+
+    public static Map<String, Map<String, double[]>> generateRegionMap() {
+        Map<String, Map<String, double[]>> map = new HashMap<>();
+        Arrays.stream(ProjectUtils.PROJECT_EXAM_REGIONS).forEach(e -> map.put(e, new HashMap<>()));
         return map;
     }
 

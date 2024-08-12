@@ -42,6 +42,8 @@ public class SysProjectStatistics {
     Map<String, Map<String, double[]>> contractShareByTypeAndPerson = ProjectUtils.generateTypeMap();
     List<TableOption> contractShareByPersonTableList = new ArrayList<>();
 
+    Map<String, Map<String, double[]>> examContractByRegionAndPerson = ProjectUtils.generateRegionMap();
+    List<TableOption> examContractByPersonTableList = new ArrayList<>();
 
     /**
      * 收款量统计数据
@@ -59,6 +61,8 @@ public class SysProjectStatistics {
 
     Map<String, Map<String, double[]>> receiveShareByTypeAndPerson = ProjectUtils.generateTypeMap();
     List<TableOption> receiveShareByPersonTableList = new ArrayList<>();
+    Map<String, Map<String, double[]>> examReceiveByRegionAndPerson = ProjectUtils.generateRegionMap();
+    List<TableOption> examReceiveByPersonTableList = new ArrayList<>();
 
 
     public void calcInnerData() {
@@ -67,12 +71,14 @@ public class SysProjectStatistics {
         buildTableFromMap(contractByPersonTableList, contractByTypeAndPerson, "业务人");
         buildTableFromMap(contractByDepartmentTableList, contractByTypeAndDepartment, "部门");
         buildTableFromMap(contractShareByPersonTableList, contractShareByTypeAndPerson, "业务人");
+        buildTableFromMap(examContractByPersonTableList, examContractByRegionAndPerson, "业务人", ProjectUtils.PROJECT_EXAM_REGIONS);
 
         buildOptionAndTotal(receiveByYearAndType, receiveChartOption, receiveTotalByType, "收款指标");
         buildTableFromMap(receiveByRegionTableList, receiveByTypeAndRegion, "地区");
         buildTableFromMap(receiveByPersonTableList, receiveByTypeAndPerson, "业务人");
         buildTableFromMap(receiveByDepartmentTableList, receiveByTypeAndDepartment, "部门");
         buildTableFromMap(receiveShareByPersonTableList, receiveShareByTypeAndPerson, "业务人");
+        buildTableFromMap(examReceiveByPersonTableList, examReceiveByRegionAndPerson, "业务人", ProjectUtils.PROJECT_EXAM_REGIONS);
 
         clear();
     }
@@ -113,7 +119,11 @@ public class SysProjectStatistics {
     }
 
     private void buildTableFromMap(List<TableOption> tableList, Map<String, Map<String, double[]>> dataMap, String column1Name) {
-        Arrays.stream(ProjectUtils.PROJECT_TYPE_NAMES).forEach(e -> tableList.add(new TableOption(e, column1Name)));
+        buildTableFromMap(tableList, dataMap, column1Name, ProjectUtils.PROJECT_TYPE_NAMES);
+    }
+
+    private void buildTableFromMap(List<TableOption> tableList, Map<String, Map<String, double[]>> dataMap, String column1Name, String[] keys) {
+        Arrays.stream(keys).forEach(e -> tableList.add(new TableOption(e, column1Name)));
         Map<String, double[]> totalMap = new HashMap<>();
         for (TableOption tableOption : tableList) {
             Map<String, double[]> detailMap = dataMap.get(tableOption.getLabel());
@@ -143,11 +153,13 @@ public class SysProjectStatistics {
         contractByTypeAndPerson.clear();
         contractByTypeAndDepartment.clear();
         contractShareByTypeAndPerson.clear();
+        examContractByRegionAndPerson.clear();
 
         receiveByYearAndType.clear();
         receiveByTypeAndRegion.clear();
         receiveByTypeAndPerson.clear();
         receiveByTypeAndDepartment.clear();
         receiveShareByTypeAndPerson.clear();
+        examReceiveByRegionAndPerson.clear();
     }
 }

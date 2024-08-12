@@ -237,6 +237,12 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
                 personShareData[month] += contractAmount * detailDto.getSalesPercent() / 100;
                 personShareData[12] += contractAmount * detailDto.getSalesPercent() / 100;
 
+                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
+                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamContractByRegionAndPerson().get(detailDto.getProjectRegion());
+                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
+                    examPersonData[month] += contractAmount;
+                    examPersonData[12] += contractAmount;
+                }
             }
 
         }
@@ -307,6 +313,13 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
                 double[] personShareData = personShareMap.computeIfAbsent(personName, k -> new double[13]);
                 personShareData[month] += receiveAmount * detailDto.getSalesPercent() / 100;
                 personShareData[12] += receiveAmount * detailDto.getSalesPercent() / 100;
+
+                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
+                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamReceiveByRegionAndPerson().get(detailDto.getProjectRegion());
+                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
+                    examPersonData[month] += receiveAmount;
+                    examPersonData[12] += receiveAmount;
+                }
             }
         }
     }
