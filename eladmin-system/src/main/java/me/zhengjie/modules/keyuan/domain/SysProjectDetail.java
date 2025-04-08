@@ -28,6 +28,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -80,23 +82,10 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "合同金额")
     private Integer contractAmount;
 
-    @Column(name = "`project_start_time`")
-    @ApiModelProperty(value = "开工时间")
-    private Timestamp projectStartTime;
-
-    @Column(name = "`project_finish_time`")
-    @ApiModelProperty(value = "竣工时间")
-    private Timestamp projectFinishTime;
-
     @Column(name = "`sales_person`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "业务人员")
     private Long salesPerson;
-
-    @Column(name = "`technical_person`", nullable = false)
-    @NotNull
-    @ApiModelProperty(value = "技术人员")
-    private Long technicalPerson;
 
     @Column(name = "`party_a_person`")
     @ApiModelProperty(value = "甲方负责人")
@@ -135,9 +124,9 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "收款金额")
     private Integer receiveAmount;
 
-    @Column(name = "`is_deleted`")
-    @ApiModelProperty(value = "0-未删除，1-已删除")
-    private Integer isDeleted;
+//    @Column(name = "`is_deleted`")
+//    @ApiModelProperty(value = "0-未删除，1-已删除")
+//    private Integer isDeleted;
 
     @Column(name = "`create_time`")
     @CreationTimestamp
@@ -159,10 +148,6 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "签订时间")
     private Timestamp contractTime;
 
-    @Column(name = "`contract_receive_time`")
-    @ApiModelProperty(value = "合同收到时间")
-    private Timestamp contractReceiveTime;
-
     @Column(name = "`contract_pay_way`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付")
@@ -174,6 +159,8 @@ public class SysProjectDetail implements Serializable {
 
     @Column(name = "`project_progress`", nullable = false)
     @NotNull
+    @Min(0)
+    @Max(100)
     @ApiModelProperty(value = "项目进度")
     private Integer projectProgress;
 

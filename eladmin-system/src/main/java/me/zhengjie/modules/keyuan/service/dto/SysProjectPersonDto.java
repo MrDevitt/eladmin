@@ -42,11 +42,6 @@ public class SysProjectPersonDto implements Serializable {
     private String phoneNumber;
 
     /**
-     * 0-未删除，1-已删除
-     */
-    private Integer isDeleted;
-
-    /**
      * 记录创建的时间
      */
     private Timestamp createTime;

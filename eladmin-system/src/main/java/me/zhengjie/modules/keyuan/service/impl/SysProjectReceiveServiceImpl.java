@@ -18,6 +18,7 @@ package me.zhengjie.modules.keyuan.service.impl;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
 import me.zhengjie.modules.keyuan.domain.SysProjectReceive;
+import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectReceiveRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
@@ -83,6 +84,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     public void create(SysProjectReceive resources) {
         sysProjectReceiveRepository.save(resources);
         updateReceiveAmount(resources.getProjectId());
+        SysProjectStatistics.CACHE = null;
     }
 
     @Override
@@ -93,6 +95,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         sysProjectReceive.copy(resources);
         sysProjectReceiveRepository.save(sysProjectReceive);
         updateReceiveAmount(resources.getProjectId());
+        SysProjectStatistics.CACHE = null;
     }
 
     @Override
@@ -106,6 +109,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
             sysProjectReceiveRepository.deleteById(id);
         }
         projectIdSet.forEach(this::updateReceiveAmount);
+        SysProjectStatistics.CACHE = null;
     }
 
     @Override
@@ -118,7 +122,6 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
             map.put("开票时间", sysProjectReceive.getInvoiceTime());
             map.put("到账金额", sysProjectReceive.getReceiveAmount());
             map.put("到账时间", sysProjectReceive.getReceiveTime());
-            map.put("0-未删除，1-已删除", sysProjectReceive.getIsDeleted());
             map.put("记录创建的时间", sysProjectReceive.getCreateTime());
             map.put("记录修改的时间", sysProjectReceive.getUpdateTime());
             list.add(map);

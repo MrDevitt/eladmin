@@ -106,6 +106,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             throw new EntityExistException(SysProjectDetail.class, "contract_number", resources.getContractNumber());
         }
         sysProjectDetailRepository.save(resources);
+        SysProjectStatistics.CACHE = null;
     }
 
     @Override
@@ -122,6 +123,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         }
         sysProjectDetail.copy(resources);
         sysProjectDetailRepository.save(sysProjectDetail);
+        SysProjectStatistics.CACHE = null;
     }
 
     @Override
@@ -135,6 +137,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
                     .forEach(e -> receiveIdSet.add(e.getId()));
         }
         sysProjectReceiveRepository.deleteAllById(receiveIdSet);
+        SysProjectStatistics.CACHE = null;
     }
 
     @Override
@@ -148,10 +151,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             map.put("乙方名称", sysProjectDetail.getPartyB());
             map.put("合同编号", sysProjectDetail.getContractNumber());
             map.put("合同金额", sysProjectDetail.getContractAmount());
-            map.put("开工时间", sysProjectDetail.getProjectStartTime());
-            map.put("竣工时间", sysProjectDetail.getProjectFinishTime());
             map.put("业务人员", sysProjectDetail.getSalesPerson());
-            map.put("技术人员", sysProjectDetail.getTechnicalPerson());
             map.put("甲方负责人", sysProjectDetail.getPartyAPerson());
             map.put("发票类型 0-专票，1-普票", sysProjectDetail.getInvoiceType());
             map.put("备注", sysProjectDetail.getRemark());
@@ -160,12 +160,10 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             map.put("管理中心百分比", sysProjectDetail.getManagementPercent());
             map.put("总裁办百分比", sysProjectDetail.getPresidentPercent());
             map.put("收款金额", sysProjectDetail.getReceiveAmount());
-            map.put("0-未删除，1-已删除", sysProjectDetail.getIsDeleted());
             map.put("记录创建的时间", sysProjectDetail.getCreateTime());
             map.put("记录修改的时间", sysProjectDetail.getUpdateTime());
             map.put(" projectRegion", sysProjectDetail.getProjectRegion());
             map.put("签订时间", sysProjectDetail.getContractTime());
-            map.put("合同收到时间", sysProjectDetail.getContractReceiveTime());
             map.put("合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付", sysProjectDetail.getContractPayWay());
             map.put("应收款金额", sysProjectDetail.getShouldReceiveAmount());
             map.put("项目进度", sysProjectDetail.getProjectProgress());
@@ -176,26 +174,29 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
 
     @Override
     public SysProjectStatistics getSysProjectStatisticsInfo() {
-        SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
-        List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(new SysProjectDetailQueryCriteria());
-        List<SysProjectPersonDto> sysProjectPersonDtoList = projectPersonService.queryAll(new SysProjectPersonQueryCriteria());
-        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
-                SysProjectPersonDto::getId,
-                Function.identity(),
-                (x, y) -> x
-        ));
-        buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap);
+        if (SysProjectStatistics.CACHE == null) {
+            SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
+            List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(new SysProjectDetailQueryCriteria());
+            List<SysProjectPersonDto> sysProjectPersonDtoList = projectPersonService.queryAll(new SysProjectPersonQueryCriteria());
+            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
+                    SysProjectPersonDto::getId,
+                    Function.identity(),
+                    (x, y) -> x
+            ));
+            buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap);
 
-        Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailDtoList.stream().collect(Collectors.toMap(
-                SysProjectDetailDto::getId,
-                Function.identity(),
-                (x, y) -> x
-        ));
-        List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveMapper.toDto(sysProjectReceiveRepository.findAll());
-        buildReceiveStatistics(sysProjectStatistics, sysProjectReceiveDtoList, sysProjectDetailDtoMap, sysProjectPersonDtoMap);
+            Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailDtoList.stream().collect(Collectors.toMap(
+                    SysProjectDetailDto::getId,
+                    Function.identity(),
+                    (x, y) -> x
+            ));
+            List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveMapper.toDto(sysProjectReceiveRepository.findAll());
+            buildReceiveStatistics(sysProjectStatistics, sysProjectReceiveDtoList, sysProjectDetailDtoMap, sysProjectPersonDtoMap);
 
-        sysProjectStatistics.calcInnerData();
-        return sysProjectStatistics;
+            sysProjectStatistics.calcInnerData();
+            SysProjectStatistics.CACHE = sysProjectStatistics;
+        }
+        return SysProjectStatistics.CACHE;
     }
 
     private static void buildContractStatistics(

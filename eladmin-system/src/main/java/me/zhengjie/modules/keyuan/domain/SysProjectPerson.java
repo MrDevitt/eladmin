@@ -59,10 +59,6 @@ public class SysProjectPerson implements Serializable {
     @ApiModelProperty(value = "手机号")
     private String phoneNumber;
 
-    @Column(name = "`is_deleted`")
-    @ApiModelProperty(value = "0-未删除，1-已删除")
-    private Integer isDeleted;
-
     @Column(name = "`create_time`")
     @CreationTimestamp
     @ApiModelProperty(value = "记录创建的时间")

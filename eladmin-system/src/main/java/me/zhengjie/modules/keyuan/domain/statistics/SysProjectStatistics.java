@@ -23,6 +23,8 @@ import java.util.Map;
 @Data
 public class SysProjectStatistics {
 
+    public static SysProjectStatistics CACHE = null;
+
 
     /**
      * 合同量统计数据

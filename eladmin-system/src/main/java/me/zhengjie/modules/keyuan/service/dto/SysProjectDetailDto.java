@@ -51,17 +51,8 @@ public class SysProjectDetailDto implements Serializable {
     /** 合同金额 */
     private Integer contractAmount;
 
-    /** 开工时间 */
-    private Timestamp projectStartTime;
-
-    /** 竣工时间 */
-    private Timestamp projectFinishTime;
-
     /** 业务人员 */
     private Long salesPerson;
-
-    /** 技术人员 */
-    private Long technicalPerson;
 
     /** 甲方负责人 */
     private Long partyAPerson;
@@ -90,11 +81,6 @@ public class SysProjectDetailDto implements Serializable {
     private Integer receiveAmount;
 
     /**
-     * 0-未删除，1-已删除
-     */
-    private Integer isDeleted;
-
-    /**
      * 记录创建的时间
      */
     private Timestamp createTime;
@@ -110,11 +96,6 @@ public class SysProjectDetailDto implements Serializable {
      * 签订时间
      */
     private Timestamp contractTime;
-
-    /**
-     * 合同收到时间
-     */
-    private Timestamp contractReceiveTime;
 
     /**
      * 合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付

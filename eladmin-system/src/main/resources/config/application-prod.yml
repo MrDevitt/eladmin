@@ -38,14 +38,14 @@ spring:
         # 控制台管理用户名和密码
         url-pattern: /druid/*
         reset-enable: false
-        login-username: admin
-        login-password: 123456
+      #        login-username: admin
+      #        login-password: 123456
       filter:
         stat:
           enabled: true
           # 记录慢SQL
           log-slow-sql: true
-          slow-sql-millis: 1000
+          slow-sql-millis: 500
           merge-sql: true
         wall:
           config:

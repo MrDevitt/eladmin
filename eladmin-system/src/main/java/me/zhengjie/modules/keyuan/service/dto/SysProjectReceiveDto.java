@@ -56,10 +56,6 @@ public class SysProjectReceiveDto implements Serializable {
      */
     private Timestamp receiveTime;
 
-    /**
-     * 0-未删除，1-已删除
-     */
-    private Integer isDeleted;
 
     /**
      * 记录创建的时间

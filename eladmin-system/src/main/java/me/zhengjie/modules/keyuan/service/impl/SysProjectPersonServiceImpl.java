@@ -17,6 +17,7 @@ package me.zhengjie.modules.keyuan.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.modules.keyuan.domain.SysProjectPerson;
+import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectPersonRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
@@ -84,6 +85,7 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
         ValidationUtil.isNull(sysProjectPerson.getId(), "SysProjectPerson", "id", resources.getId());
         sysProjectPerson.copy(resources);
         sysProjectPersonRepository.save(sysProjectPerson);
+        SysProjectStatistics.CACHE = null;
     }
 
     @Override
@@ -100,7 +102,6 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("姓名", sysProjectPerson.getName());
             map.put("手机号", sysProjectPerson.getPhoneNumber());
-            map.put("0-未删除，1-已删除", sysProjectPerson.getIsDeleted());
             map.put("记录创建的时间", sysProjectPerson.getCreateTime());
             map.put("记录修改的时间", sysProjectPerson.getUpdateTime());
             list.add(map);
