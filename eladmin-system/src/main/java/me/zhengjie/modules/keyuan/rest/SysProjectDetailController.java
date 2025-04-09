@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
+import me.zhengjie.modules.keyuan.domain.SysShouldReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
@@ -77,6 +78,14 @@ public class SysProjectDetailController {
     @PreAuthorize("@el.check('sysProjectDetail:list')")
     public ResponseEntity<SysProjectStatistics> querySysProjectStatistics() {
         return new ResponseEntity<>(sysProjectDetailService.getSysProjectStatisticsInfo(), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/shouldReceiveData")
+    @Log("查询项目应收款数据")
+    @ApiOperation("查询项目应收款数据")
+    @PreAuthorize("@el.check('sysProjectDetail:list')")
+    public ResponseEntity<SysShouldReceiveData> querySysShouldReceiveData() {
+        return new ResponseEntity<>(sysProjectDetailService.getSysShouldReceiveData(), HttpStatus.OK);
     }
 
     @PostMapping

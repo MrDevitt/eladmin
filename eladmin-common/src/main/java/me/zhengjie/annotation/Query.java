@@ -61,6 +61,8 @@ public @interface Query {
         , LEFT_LIKE
         // Dong ZhaoYang 2017/8/7 右模糊查询
         , RIGHT_LIKE
+        //大于
+        , GREATER_THAN_NQ
         // Dong ZhaoYang 2017/8/7 小于
         , LESS_THAN_NQ
         // jie 2019/6/4 包含
@@ -68,9 +70,9 @@ public @interface Query {
         // 不包含
         , NOT_IN
         // 不等于
-        ,NOT_EQUAL
+        , NOT_EQUAL
         // between
-        ,BETWEEN
+        , BETWEEN
         // 不为空
         ,NOT_NULL
         // 为空

@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.exception.EntityExistException;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
+import me.zhengjie.modules.keyuan.domain.SysShouldReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectReceiveRepository;
@@ -47,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -330,4 +332,42 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         calendar.add(Calendar.MONTH, -1);
         return String.valueOf(calendar.get(Calendar.YEAR));
     }
+
+    @Override
+    public SysShouldReceiveData getSysShouldReceiveData() {
+        SysShouldReceiveData sysShouldReceiveData = new SysShouldReceiveData();
+        SysProjectDetailQueryCriteria queryCriteria = new SysProjectDetailQueryCriteria();
+        queryCriteria.setShouldReceiveAmount(0);
+        List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(queryCriteria);
+
+        Map<Long, Map<String, Double>> shouldReceiveByNameAndType = new HashMap<>();
+        List<SysProjectPersonDto> sysProjectPersonDtoList = projectPersonService.queryAll(new SysProjectPersonQueryCriteria());
+        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
+                SysProjectPersonDto::getId,
+                Function.identity(),
+                (x, y) -> x
+        ));
+        for (SysProjectDetailDto sysProjectDetailDto : sysProjectDetailDtoList) {
+            String type = ProjectUtils.projectTypeToName(sysProjectDetailDto.getProjectType());
+            SysProjectPersonDto personDto = sysProjectPersonDtoMap.get(sysProjectDetailDto.getSalesPerson());
+            Map<String, Double> shouldReceiveByType = shouldReceiveByNameAndType.computeIfAbsent(personDto.getId(), k -> new HashMap<>());
+            double currentAmount = shouldReceiveByType.computeIfAbsent(type, k -> 0d);
+            double totalAmount = shouldReceiveByType.computeIfAbsent("sum", k -> 0d);
+            shouldReceiveByType.put(type, currentAmount + ProjectUtils.dbPriceToRealPrice(sysProjectDetailDto.getShouldReceiveAmount()));
+            shouldReceiveByType.put("sum", totalAmount + ProjectUtils.dbPriceToRealPrice(sysProjectDetailDto.getShouldReceiveAmount()));
+        }
+
+        List<Map<String, String>> tableData = new ArrayList<>();
+        shouldReceiveByNameAndType.forEach((key, value) -> {
+            Map<String, String> data = new HashMap<>();
+            String name = sysProjectPersonDtoMap.get(key).getName();
+            data.put("name", name);
+            value.forEach((key1, value1) -> data.put(key1, String.format("%.2f", value1)));
+            tableData.add(data);
+        });
+        tableData.sort(Comparator.comparing(a -> -Integer.parseInt(a.get("sum").substring(0, a.get("sum").length() - 3))));
+        sysShouldReceiveData.setTableData(tableData);
+        return sysShouldReceiveData;
+    }
+
 }

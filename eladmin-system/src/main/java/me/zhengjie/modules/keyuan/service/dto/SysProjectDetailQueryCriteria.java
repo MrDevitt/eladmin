@@ -32,11 +32,8 @@ public class SysProjectDetailQueryCriteria {
     @Query
     private Long id;
 
-    @Query(propName = "contractTime", type = Query.Type.LESS_THAN)
-    private Timestamp endContractTime;
-
-    @Query(propName = "contractTime", type = Query.Type.GREATER_THAN)
-    private Timestamp beginContractTime;
+    @Query(type = Query.Type.BETWEEN)
+    private List<Timestamp> contractTime;
 
     /**
      * 模糊
@@ -47,7 +44,7 @@ public class SysProjectDetailQueryCriteria {
     /**
      * 模糊
      */
-    @Query(type = Query.Type.INNER_LIKE)
+    @Query
     private Long salesPerson;
 
     @Query
@@ -58,4 +55,7 @@ public class SysProjectDetailQueryCriteria {
 
     @Query(type = Query.Type.BETWEEN)
     private List<Timestamp> createTime;
+
+    @Query(type = Query.Type.GREATER_THAN_NQ)
+    private Integer shouldReceiveAmount;
 }
