@@ -15,24 +15,24 @@
  */
 package me.zhengjie.modules.keyuan.service;
 
-import me.zhengjie.modules.keyuan.domain.SysProjectPerson;
-import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
-import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonQueryCriteria;
+import me.zhengjie.modules.keyuan.domain.SysGuaranteeData;
+import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeQueryCriteria;
 import me.zhengjie.utils.PageResult;
 import org.springframework.data.domain.Pageable;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author MrDevitt
  * @website https://eladmin.vip
  * @description 服务接口
- * @date 2024-04-04
+ * @date 2025-04-11
  **/
-public interface SysProjectPersonService {
+public interface SysProjectGuaranteeService {
 
     /**
      * 查询数据分页
@@ -41,37 +41,37 @@ public interface SysProjectPersonService {
      * @param pageable 分页参数
      * @return Map<String, Object>
      */
-    PageResult<SysProjectPersonDto> queryAll(SysProjectPersonQueryCriteria criteria, Pageable pageable);
+    PageResult<SysProjectGuaranteeDto> queryAll(SysProjectGuaranteeQueryCriteria criteria, Pageable pageable);
 
     /**
      * 查询所有数据不分页
      *
      * @param criteria 条件参数
-     * @return List<SysProjectPersonDto>
+     * @return List<SysProjectGuaranteeDto>
      */
-    List<SysProjectPersonDto> queryAll(SysProjectPersonQueryCriteria criteria);
+    List<SysProjectGuaranteeDto> queryAll(SysProjectGuaranteeQueryCriteria criteria);
 
     /**
      * 根据ID查询
      *
      * @param id ID
-     * @return SysProjectPersonDto
+     * @return SysProjectGuaranteeDto
      */
-    SysProjectPersonDto findById(Long id);
+    SysProjectGuaranteeDto findById(Long id);
 
     /**
      * 创建
      *
      * @param resources /
      */
-    void create(SysProjectPerson resources);
+    void create(SysProjectGuarantee resources);
 
     /**
      * 编辑
      *
      * @param resources /
      */
-    void update(SysProjectPerson resources);
+    void update(SysProjectGuarantee resources);
 
     /**
      * 多选删除
@@ -87,7 +87,7 @@ public interface SysProjectPersonService {
      * @param response /
      * @throws IOException /
      */
-    void download(List<SysProjectPersonDto> all, HttpServletResponse response) throws IOException;
+    void download(List<SysProjectGuaranteeDto> all, HttpServletResponse response) throws IOException;
 
-    Map<Long, SysProjectPersonDto> getIdToPersonMap();
+    SysGuaranteeData getSysGuaranteeData();
 }

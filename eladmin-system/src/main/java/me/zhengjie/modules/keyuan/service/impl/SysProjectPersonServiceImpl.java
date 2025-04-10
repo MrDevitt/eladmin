@@ -17,7 +17,6 @@ package me.zhengjie.modules.keyuan.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.modules.keyuan.domain.SysProjectPerson;
-import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectPersonRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
@@ -39,6 +38,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author MrDevitt
@@ -52,6 +53,8 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
 
     private final SysProjectPersonRepository sysProjectPersonRepository;
     private final SysProjectPersonMapper sysProjectPersonMapper;
+
+    private static Map<Long, SysProjectPersonDto> idToPersonMap = null;
 
     @Override
     public PageResult<SysProjectPersonDto> queryAll(SysProjectPersonQueryCriteria criteria, Pageable pageable) {
@@ -76,6 +79,7 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectPerson resources) {
         sysProjectPersonRepository.save(resources);
+        idToPersonMap = null;
     }
 
     @Override
@@ -85,7 +89,7 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
         ValidationUtil.isNull(sysProjectPerson.getId(), "SysProjectPerson", "id", resources.getId());
         sysProjectPerson.copy(resources);
         sysProjectPersonRepository.save(sysProjectPerson);
-        SysProjectStatistics.CACHE = null;
+        idToPersonMap = null;
     }
 
     @Override
@@ -93,6 +97,7 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
         for (Long id : ids) {
             sysProjectPersonRepository.deleteById(id);
         }
+        idToPersonMap = null;
     }
 
     @Override
@@ -108,4 +113,18 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
         }
         FileUtil.downloadExcel(list, response);
     }
+
+    @Override
+    public Map<Long, SysProjectPersonDto> getIdToPersonMap() {
+        if (idToPersonMap == null) {
+            List<SysProjectPersonDto> sysProjectPersonDtoList = queryAll(new SysProjectPersonQueryCriteria());
+            idToPersonMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
+                    SysProjectPersonDto::getId,
+                    Function.identity(),
+                    (x, y) -> x
+            ));
+        }
+        return idToPersonMap;
+    }
+
 }

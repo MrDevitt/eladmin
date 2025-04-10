@@ -13,27 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package me.zhengjie.service.dto;
+package me.zhengjie.modules.keyuan.repository;
 
-import lombok.Data;
-import me.zhengjie.annotation.Query;
-
-import java.sql.Timestamp;
-import java.util.List;
+import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
-* @author Zheng Jie
- * @date 2019-09-05
- */
-@Data
-public class LocalStorageQueryCriteria {
-
-    @Query(blurry = "name,suffix,type,createBy,size")
-    private String blurry;
-
-    @Query(type = Query.Type.BETWEEN)
-    private List<Timestamp> createTime;
-
-    @Query(type = Query.Type.RIGHT_LIKE)
-    private String name;
+ * @author MrDevitt
+ * @website https://eladmin.vip
+ * @date 2025-04-11
+ **/
+public interface SysProjectGuaranteeRepository extends JpaRepository<SysProjectGuarantee, Long>, JpaSpecificationExecutor<SysProjectGuarantee> {
 }

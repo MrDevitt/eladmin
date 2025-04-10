@@ -28,7 +28,6 @@ import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
-import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
@@ -179,12 +178,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         if (SysProjectStatistics.CACHE == null) {
             SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
             List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(new SysProjectDetailQueryCriteria());
-            List<SysProjectPersonDto> sysProjectPersonDtoList = projectPersonService.queryAll(new SysProjectPersonQueryCriteria());
-            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
-                    SysProjectPersonDto::getId,
-                    Function.identity(),
-                    (x, y) -> x
-            ));
+            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = projectPersonService.getIdToPersonMap();
             buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap);
 
             Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailDtoList.stream().collect(Collectors.toMap(
@@ -341,12 +335,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(queryCriteria);
 
         Map<Long, Map<String, Double>> shouldReceiveByNameAndType = new HashMap<>();
-        List<SysProjectPersonDto> sysProjectPersonDtoList = projectPersonService.queryAll(new SysProjectPersonQueryCriteria());
-        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
-                SysProjectPersonDto::getId,
-                Function.identity(),
-                (x, y) -> x
-        ));
+        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = projectPersonService.getIdToPersonMap();
         for (SysProjectDetailDto sysProjectDetailDto : sysProjectDetailDtoList) {
             String type = ProjectUtils.projectTypeToName(sysProjectDetailDto.getProjectType());
             SysProjectPersonDto personDto = sysProjectPersonDtoMap.get(sysProjectDetailDto.getSalesPerson());

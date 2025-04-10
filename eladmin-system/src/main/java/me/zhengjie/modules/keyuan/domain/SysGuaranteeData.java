@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class SysShouldReceiveData {
-
+public class SysGuaranteeData {
     private List<Map<String, String>> tableData;
-
 }

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package me.zhengjie.service.dto;
+package me.zhengjie.modules.keyuan.service.dto;
 
 import lombok.Data;
 import me.zhengjie.annotation.Query;
@@ -22,18 +22,36 @@ import java.sql.Timestamp;
 import java.util.List;
 
 /**
-* @author Zheng Jie
- * @date 2019-09-05
- */
+ * @author MrDevitt
+ * @website https://eladmin.vip
+ * @date 2025-04-11
+ **/
 @Data
-public class LocalStorageQueryCriteria {
+public class SysProjectGuaranteeQueryCriteria {
 
-    @Query(blurry = "name,suffix,type,createBy,size")
-    private String blurry;
+    /**
+     * 精确
+     */
+    @Query
+    private Integer status;
 
+    @Query(type = Query.Type.NOT_EQUAL, propName = "status")
+    private Integer notEqualStatus;
+
+    /**
+     * 精确
+     */
+    @Query
+    private Integer projectType;
+
+    /**
+     * 精确
+     */
+    @Query
+    private Long guaranteePerson;
+    /**
+     * BETWEEN
+     */
     @Query(type = Query.Type.BETWEEN)
     private List<Timestamp> createTime;
-
-    @Query(type = Query.Type.RIGHT_LIKE)
-    private String name;
 }

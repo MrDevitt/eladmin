@@ -3,9 +3,13 @@ package me.zhengjie.modules.quartz.task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
+import me.zhengjie.modules.keyuan.service.SysProjectGuaranteeService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
+import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectGuaranteeMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +21,10 @@ public class SysProjectDetailTask {
 
     private final SysProjectDetailService sysProjectDetailService;
     private final SysProjectDetailMapper sysProjectDetailMapper;
+
+    private final SysProjectGuaranteeService sysProjectGuaranteeService;
+
+    private final SysProjectGuaranteeMapper sysProjectGuaranteeMapper;
 
 
     public void updateShouldReceiveAmount() {
@@ -62,4 +70,22 @@ public class SysProjectDetailTask {
         return Math.max(shouldPay - receive, 0);
     }
 
+    public void updateGuaranteeStatus() {
+        log.info("updateGuaranteeStatus begin");
+        long st = System.currentTimeMillis();
+        try {
+            SysProjectGuaranteeQueryCriteria criteria = new SysProjectGuaranteeQueryCriteria();
+            criteria.setStatus(SysProjectGuaranteeDto.STATUS_NORMAL);
+            List<SysProjectGuaranteeDto> sysProjectGuaranteeDtoList = sysProjectGuaranteeService.queryAll(new SysProjectGuaranteeQueryCriteria());
+            for (SysProjectGuaranteeDto dto : sysProjectGuaranteeDtoList) {
+                if (dto.getGuaranteeTime().getTime() < st) {
+                    dto.setStatus(SysProjectGuaranteeDto.STATUS_ABNORMAL);
+                    sysProjectGuaranteeService.update(sysProjectGuaranteeMapper.toEntity(dto));
+                }
+            }
+            log.info("updateGuaranteeStatus success, time = " + (System.currentTimeMillis() - st));
+        } catch (Exception e) {
+            log.error("updateGuaranteeStatus error", e);
+        }
+    }
 }

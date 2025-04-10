@@ -15,6 +15,8 @@
  */
 package me.zhengjie.rest;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.domain.LocalStorage;
@@ -29,9 +31,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import io.swagger.annotations.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -50,8 +59,21 @@ public class LocalStorageController {
     @GetMapping
     @ApiOperation("查询文件")
     @PreAuthorize("@el.check('storage:list')")
-    public ResponseEntity<PageResult<LocalStorageDto>> queryFile(LocalStorageQueryCriteria criteria, Pageable pageable){
-        return new ResponseEntity<>(localStorageService.queryAll(criteria,pageable),HttpStatus.OK);
+    public ResponseEntity<PageResult<LocalStorageDto>> queryFile(LocalStorageQueryCriteria criteria, Pageable pageable) {
+        return new ResponseEntity<>(localStorageService.queryAll(criteria, pageable), HttpStatus.OK);
+    }
+
+    @GetMapping("/projectAttachment")
+    @ApiOperation("查询文件")
+    @PreAuthorize("@el.check('storage:list')")
+    public ResponseEntity<PageResult<LocalStorageDto>> queryFile(Long projectId, @RequestParam(required = false) String prefix, Pageable pageable) {
+        LocalStorageQueryCriteria criteria = new LocalStorageQueryCriteria();
+        String name = projectId + "_";
+        if (prefix != null) {
+            name = prefix + name;
+        }
+        criteria.setName(name);
+        return new ResponseEntity<>(localStorageService.queryAll(criteria, pageable), HttpStatus.OK);
     }
 
     @ApiOperation("导出数据")
@@ -64,17 +86,30 @@ public class LocalStorageController {
     @PostMapping
     @ApiOperation("上传文件")
     @PreAuthorize("@el.check('storage:add')")
-    public ResponseEntity<Object> createFile(@RequestParam String name, @RequestParam("file") MultipartFile file){
+    public ResponseEntity<Object> createFile(@RequestParam String name, @RequestParam("file") MultipartFile file) {
+        localStorageService.create(name, file);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("/projectAttachment")
+    @ApiOperation("上传项目附件")
+    @PreAuthorize("@el.check('storage:add')")
+    public ResponseEntity<Object> createAttachmentFile(@RequestParam String name, @RequestParam("file") MultipartFile file) {
+        String suffix = FileUtil.getExtensionName(file.getOriginalFilename());
+        String type = FileUtil.getFileType(suffix);
+        if (!FileUtil.IMAGE.equals(type) && !"pdf".equals(suffix)) {
+            throw new BadRequestException("上传失败，不支持的文件格式");
+        }
         localStorageService.create(name, file);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @ApiOperation("上传图片")
     @PostMapping("/pictures")
-    public ResponseEntity<LocalStorage> uploadPicture(@RequestParam MultipartFile file){
+    public ResponseEntity<LocalStorage> uploadPicture(@RequestParam MultipartFile file) {
         // 判断文件是否为图片
         String suffix = FileUtil.getExtensionName(file.getOriginalFilename());
-        if(!FileUtil.IMAGE.equals(FileUtil.getFileType(suffix))){
+        if (!FileUtil.IMAGE.equals(FileUtil.getFileType(suffix))) {
             throw new BadRequestException("只能上传图片");
         }
         LocalStorage localStorage = localStorageService.create(null, file);
