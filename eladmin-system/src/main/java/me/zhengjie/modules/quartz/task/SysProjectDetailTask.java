@@ -76,7 +76,7 @@ public class SysProjectDetailTask {
         try {
             SysProjectGuaranteeQueryCriteria criteria = new SysProjectGuaranteeQueryCriteria();
             criteria.setStatus(SysProjectGuaranteeDto.STATUS_NORMAL);
-            List<SysProjectGuaranteeDto> sysProjectGuaranteeDtoList = sysProjectGuaranteeService.queryAll(new SysProjectGuaranteeQueryCriteria());
+            List<SysProjectGuaranteeDto> sysProjectGuaranteeDtoList = sysProjectGuaranteeService.queryAll(criteria);
             for (SysProjectGuaranteeDto dto : sysProjectGuaranteeDtoList) {
                 if (dto.getGuaranteeTime().getTime() < st) {
                     dto.setStatus(SysProjectGuaranteeDto.STATUS_ABNORMAL);
