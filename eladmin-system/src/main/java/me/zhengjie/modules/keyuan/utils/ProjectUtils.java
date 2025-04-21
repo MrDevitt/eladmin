@@ -12,8 +12,12 @@ public class ProjectUtils {
     public static final String PROJECT_DEPARTMENT_MANAGEMENT = "管理中心";
     public static final String PROJECT_DEPARTMENT_SALES = "业务中心";
     public static final String PROJECT_DEPARTMENT_TECH = "技术中心";
+    public static final String[] PROJECT_DEPARTMENTS = new String[]{"业务中心", "技术中心", "管理中心", "总裁办"};
 
+    public static final int PROJECT_TYPE_EXPENSE = -1;
     public static final int PROJECT_TYPE_EXAM = 0;
+    public static final int PROJECT_TYPE_SUPERVISE = 1;
+    public static final int PROJECT_TYPE_DESIGN = 2;
 
     public static String projectTypeToName(int typeId) {
         return PROJECT_TYPE_NAMES[typeId];
@@ -40,6 +44,10 @@ public class ProjectUtils {
 
     public static double dbPriceToRealPrice(Number dbPrice) {
         return dbPrice.doubleValue() / 100;
+    }
+
+    public static long realPriceToDbPrice(String realPrice) {
+        return (long) Double.parseDouble(realPrice) * 100;
     }
 
     public static Map<String, Map<String, double[]>> generateTypeMap() {

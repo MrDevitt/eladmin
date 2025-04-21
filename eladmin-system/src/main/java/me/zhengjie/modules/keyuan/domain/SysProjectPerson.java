@@ -69,6 +69,14 @@ public class SysProjectPerson implements Serializable {
     @ApiModelProperty(value = "记录修改的时间")
     private Timestamp updateTime;
 
+    @Column(name = "`account_number`")
+    @ApiModelProperty(value = "科目编号")
+    private String accountNumber;
+
+    @Column(name = "`initial_balance`")
+    @ApiModelProperty(value = "上年结转余额")
+    private Integer initialBalance;
+
     public void copy(SysProjectPerson source) {
         BeanUtil.copyProperties(source, this, CopyOptions.create().setIgnoreNullValue(true));
     }

@@ -134,7 +134,9 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         if (sysProjectDetail == null) {
             return;
         }
-        List<SysProjectReceiveDto> receiveDtoList = queryAll(new SysProjectReceiveQueryCriteria(projectId));
+        SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
+        criteria.setProjectId(projectId);
+        List<SysProjectReceiveDto> receiveDtoList = queryAll(criteria);
         int totalReceive = receiveDtoList.stream().mapToInt(SysProjectReceiveDto::getReceiveAmount).sum();
         sysProjectDetail.setReceiveAmount(totalReceive);
         sysProjectDetailRepository.save(sysProjectDetail);

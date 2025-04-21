@@ -15,9 +15,10 @@
  */
 package me.zhengjie.modules.keyuan.service.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import me.zhengjie.annotation.Query;
+
+import java.sql.Timestamp;
 
 /**
  * @author MrDevitt
@@ -25,8 +26,10 @@ import me.zhengjie.annotation.Query;
  * @date 2024-07-03
  **/
 @Data
-@AllArgsConstructor
 public class SysProjectReceiveQueryCriteria {
     @Query
     private Long projectId;
+
+    @Query(type = Query.Type.GREATER_THAN)
+    private Timestamp receiveTime;
 }

@@ -1,5 +1,6 @@
 package me.zhengjie.modules.quartz.task;
 
+import com.kingdee.service.ApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
@@ -8,6 +9,7 @@ import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeQueryCriteria;
+import me.zhengjie.modules.keyuan.service.impl.KingdeeService;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectGuaranteeMapper;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ public class SysProjectDetailTask {
     private final SysProjectGuaranteeService sysProjectGuaranteeService;
 
     private final SysProjectGuaranteeMapper sysProjectGuaranteeMapper;
+
+    private final KingdeeService kingdeeService;
 
 
     public void updateShouldReceiveAmount() {
@@ -87,5 +91,15 @@ public class SysProjectDetailTask {
         } catch (Exception e) {
             log.error("updateGuaranteeStatus error", e);
         }
+    }
+
+    //每天
+    public void refreshKingdeeToken() throws ApiException {
+        kingdeeService.refreshToken();
+    }
+
+    //每小时
+    public void refreshKingdeeCache() throws ApiException {
+        kingdeeService.refreshBalanceRowCache();
     }
 }

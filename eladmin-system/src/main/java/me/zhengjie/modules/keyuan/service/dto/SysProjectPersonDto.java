@@ -50,4 +50,14 @@ public class SysProjectPersonDto implements Serializable {
      * 记录修改的时间
      */
     private Timestamp updateTime;
+
+    /**
+     * 科目编号
+     */
+    private String accountNumber;
+
+    /**
+     * 上年结转余额
+     */
+    private Integer initialBalance;
 }

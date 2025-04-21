@@ -132,7 +132,8 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         Set<Long> receiveIdSet = new HashSet<>();
         for (Long id : ids) {
             sysProjectDetailRepository.deleteById(id);
-            SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria(id);
+            SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
+            criteria.setProjectId(id);
             sysProjectReceiveRepository
                     .findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder))
                     .forEach(e -> receiveIdSet.add(e.getId()));
