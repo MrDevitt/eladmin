@@ -58,4 +58,10 @@ public class SysProjectDetailQueryCriteria {
 
     @Query(type = Query.Type.GREATER_THAN_NQ)
     private Integer shouldReceiveAmount;
+
+    @Query(type = Query.Type.INNER_LIKE)
+    private String contractNumber;
+
+    @Query(type = Query.Type.BETWEEN)
+    private List<Integer> projectProgress;
 }

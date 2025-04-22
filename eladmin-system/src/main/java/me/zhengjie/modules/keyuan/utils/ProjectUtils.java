@@ -7,6 +7,8 @@ import java.util.Map;
 public class ProjectUtils {
     private static final String[] MONTH_NAMES = new String[]{"一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"};
     public static final String[] PROJECT_TYPE_NAMES = new String[]{"检测", "监理", "设计", "其他"};
+    public static final String[] PROJECT_PAY_WAYS = new String[]{"签合同50，完工结清", "一次性付清", "签合同30进度50付30完工结清", "按进度拨付"};
+    public static final String[] PROJECT_INVOICE_NAMES = new String[]{"专票", "普票", "无票"};
     public static final String[] PROJECT_EXAM_REGIONS = new String[]{"日喀则", "拉萨", "阿里", "那曲"};
     public static final String PROJECT_DEPARTMENT_PRESIDENT = "总裁办";
     public static final String PROJECT_DEPARTMENT_MANAGEMENT = "管理中心";
@@ -43,7 +45,17 @@ public class ProjectUtils {
     }
 
     public static double dbPriceToRealPrice(Number dbPrice) {
+        if (dbPrice == null) {
+            return 0d;
+        }
         return dbPrice.doubleValue() / 100;
+    }
+
+    public static String dbPriceToRealPriceString(Number dbPrice) {
+        if (dbPrice == null) {
+            return "0.00";
+        }
+        return String.format("%.2f", dbPrice.doubleValue() / 100);
     }
 
     public static long realPriceToDbPrice(String realPrice) {

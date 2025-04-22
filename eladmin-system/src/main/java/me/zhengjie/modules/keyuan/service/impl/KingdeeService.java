@@ -81,11 +81,16 @@ public class KingdeeService {
                 Function.identity(),
                 (x, y) -> x
         ));
+        balanceReplyRowMap.remove("");
     }
 
     public AccountBalanceData getAccountBalanceByNumber(String accountNumber) {
         AccountBalanceData data = new AccountBalanceData();
         AccountBalanceReplyRow row = balanceReplyRowMap.get(accountNumber);
+        if (row == null) {
+            log.info("null AccountBalanceReplyRow accountNumber = " + accountNumber);
+            return data;
+        }
         data.setExpenseLast(ProjectUtils.realPriceToDbPrice(row.getBeginBal()));
         data.setExpenseThisMonth(ProjectUtils.realPriceToDbPrice(row.getDebit()));
         data.setExpenseThisYear(ProjectUtils.realPriceToDbPrice(row.getYtdDebit()));

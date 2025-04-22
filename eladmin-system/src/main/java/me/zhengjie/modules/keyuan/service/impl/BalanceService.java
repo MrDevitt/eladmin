@@ -14,6 +14,7 @@ import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.utils.CalendarUtils;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -120,7 +121,7 @@ public class BalanceService {
         receiveByPersonAndType.forEach((k, v) -> {
             AccountBalanceData data = new AccountBalanceData();
             SysProjectPersonDto personDto = personMap.get(k);
-            if (personDto.getInitialBalance() != null && personDto.getAccountNumber() != null) {
+            if (personDto.getInitialBalance() != null && StringUtils.isNotEmpty(personDto.getAccountNumber())) {
                 data = kingdeeService.getAccountBalanceByNumber(personDto.getAccountNumber());
                 data.setInitialBalance(personDto.getInitialBalance());
             }

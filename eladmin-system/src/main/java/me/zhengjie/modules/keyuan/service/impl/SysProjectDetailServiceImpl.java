@@ -145,30 +145,31 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
     @Override
     public void download(List<SysProjectDetailDto> all, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
+        Map<Long, SysProjectPersonDto> personDtoMap = projectPersonService.getIdToPersonMap();
         for (SysProjectDetailDto sysProjectDetail : all) {
             Map<String, Object> map = new LinkedHashMap<>();
-            map.put("项目类型 0-检测，1-监理，2-设计", sysProjectDetail.getProjectType());
+            map.put("项目类型", ProjectUtils.projectTypeToName(sysProjectDetail.getProjectType()));
             map.put("项目名", sysProjectDetail.getProjectName());
+            map.put("项目区域", sysProjectDetail.getProjectRegion());
             map.put("甲方名称", sysProjectDetail.getPartyA());
             map.put("乙方名称", sysProjectDetail.getPartyB());
             map.put("合同编号", sysProjectDetail.getContractNumber());
-            map.put("合同金额", sysProjectDetail.getContractAmount());
-            map.put("业务人员", sysProjectDetail.getSalesPerson());
-            map.put("甲方负责人", sysProjectDetail.getPartyAPerson());
-            map.put("发票类型 0-专票，1-普票", sysProjectDetail.getInvoiceType());
+            map.put("签订时间", sysProjectDetail.getContractTime());
+            map.put("合同金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getContractAmount()));
+            map.put("合同付款方式", ProjectUtils.PROJECT_PAY_WAYS[sysProjectDetail.getContractPayWay()]);
+            map.put("项目进度", sysProjectDetail.getProjectProgress());
+            map.put("收款金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getReceiveAmount()));
+            map.put("应收款金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getShouldReceiveAmount()));
+            map.put("业务人员", personDtoMap.get(sysProjectDetail.getSalesPerson()).getName());
+            map.put("甲方负责人", personDtoMap.getOrDefault(sysProjectDetail.getPartyAPerson(), new SysProjectPersonDto()).getName());
+            map.put("发票类型", ProjectUtils.PROJECT_INVOICE_NAMES[sysProjectDetail.getInvoiceType()]);
             map.put("备注", sysProjectDetail.getRemark());
             map.put("业务中心百分比", sysProjectDetail.getSalesPercent());
             map.put("技术中心百分比", sysProjectDetail.getTechnicalPercent());
             map.put("管理中心百分比", sysProjectDetail.getManagementPercent());
             map.put("总裁办百分比", sysProjectDetail.getPresidentPercent());
-            map.put("收款金额", sysProjectDetail.getReceiveAmount());
-            map.put("记录创建的时间", sysProjectDetail.getCreateTime());
-            map.put("记录修改的时间", sysProjectDetail.getUpdateTime());
-            map.put(" projectRegion", sysProjectDetail.getProjectRegion());
-            map.put("签订时间", sysProjectDetail.getContractTime());
-            map.put("合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付", sysProjectDetail.getContractPayWay());
-            map.put("应收款金额", sysProjectDetail.getShouldReceiveAmount());
-            map.put("项目进度", sysProjectDetail.getProjectProgress());
+            map.put("创建时间", sysProjectDetail.getCreateTime());
+            map.put("修改时间", sysProjectDetail.getUpdateTime());
             list.add(map);
         }
         FileUtil.downloadExcel(list, response);
