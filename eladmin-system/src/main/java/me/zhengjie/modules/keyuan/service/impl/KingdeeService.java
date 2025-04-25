@@ -16,13 +16,13 @@ import com.kingdee.service.unit.SHAUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.domain.balance.AccountBalanceData;
-import me.zhengjie.modules.keyuan.utils.KingdeeUtils;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Base64;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +42,7 @@ public class KingdeeService {
     @Value("${kingdee.instance_id}")
     private String instanceId;
 
-    private Map<String, AccountBalanceReplyRow> balanceReplyRowMap = new HashMap<>();
+    private final Map<Integer, Map<String, AccountBalanceReplyRow>> balanceReplyByMonthAndNumber = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -71,24 +71,35 @@ public class KingdeeService {
 
     public void refreshBalanceRowCache() throws ApiException {
         AccountBookApi accountBookApi = new AccountBookApi();
-        AccountBookAccountBalanceReq req = new AccountBookAccountBalanceReq()
-                .endPeriod(KingdeeUtils.getThisMonthPeriod())
-                .startPeriod(KingdeeUtils.getThisMonthPeriod());
-
-        AccountBalanceReply accountBalanceReply = accountBookApi.accountBookAccountBalance(req);
-        balanceReplyRowMap = accountBalanceReply.getRows().stream().collect(Collectors.toMap(
-                AccountBalanceReplyRow::getAccountNo,
-                Function.identity(),
-                (x, y) -> x
-        ));
-        balanceReplyRowMap.remove("");
+        int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
+        String year = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+        for (int i = 1; i <= currentMonth; i++) {
+            if (balanceReplyByMonthAndNumber.containsKey(i) && i != currentMonth) {
+                continue;
+            }
+            String period = year + String.format("%02d", i);
+            AccountBookAccountBalanceReq req = new AccountBookAccountBalanceReq()
+                    .endPeriod(period)
+                    .startPeriod(period);
+            AccountBalanceReply accountBalanceReply = accountBookApi.accountBookAccountBalance(req);
+            Map<String, AccountBalanceReplyRow> map = accountBalanceReply.getRows().stream().collect(Collectors.toMap(
+                    AccountBalanceReplyRow::getAccountNo,
+                    Function.identity(),
+                    (x, y) -> x
+            ));
+            map.remove("");
+            balanceReplyByMonthAndNumber.put(i, map);
+        }
     }
 
-    public AccountBalanceData getAccountBalanceByNumber(String accountNumber) {
+    public AccountBalanceData getAccountBalanceByNumber(String accountNumber, int month) {
         AccountBalanceData data = new AccountBalanceData();
-        AccountBalanceReplyRow row = balanceReplyRowMap.get(accountNumber);
+        Map<String, AccountBalanceReplyRow> map = balanceReplyByMonthAndNumber.get(month);
+        if (map == null) {
+            return data;
+        }
+        AccountBalanceReplyRow row = map.get(accountNumber);
         if (row == null) {
-            log.info("null AccountBalanceReplyRow accountNumber = " + accountNumber);
             return data;
         }
         data.setExpenseLast(ProjectUtils.realPriceToDbPrice(row.getBeginBal()));

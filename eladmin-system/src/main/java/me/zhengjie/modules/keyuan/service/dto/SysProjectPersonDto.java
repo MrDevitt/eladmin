@@ -52,9 +52,14 @@ public class SysProjectPersonDto implements Serializable {
     private Timestamp updateTime;
 
     /**
-     * 科目编号
+     * 开销科目编号
      */
     private String accountNumber;
+
+    /**
+     * 备用金科目编号
+     */
+    private String reserveFundNumber;
 
     /**
      * 上年结转余额

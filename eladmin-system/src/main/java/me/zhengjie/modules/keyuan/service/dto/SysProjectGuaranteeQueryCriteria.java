@@ -44,6 +44,9 @@ public class SysProjectGuaranteeQueryCriteria {
     @Query
     private Integer projectType;
 
+    @Query(type = Query.Type.INNER_LIKE)
+    private String projectName;
+
     /**
      * 精确
      */

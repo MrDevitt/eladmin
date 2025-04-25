@@ -19,6 +19,7 @@ import lombok.Data;
 import me.zhengjie.annotation.Query;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * @author MrDevitt
@@ -30,6 +31,6 @@ public class SysProjectReceiveQueryCriteria {
     @Query
     private Long projectId;
 
-    @Query(type = Query.Type.GREATER_THAN)
-    private Timestamp receiveTime;
+    @Query(type = Query.Type.BETWEEN)
+    private List<Timestamp> receiveTime;
 }

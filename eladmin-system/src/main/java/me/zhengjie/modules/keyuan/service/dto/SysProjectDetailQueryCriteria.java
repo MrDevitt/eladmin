@@ -64,4 +64,7 @@ public class SysProjectDetailQueryCriteria {
 
     @Query(type = Query.Type.BETWEEN)
     private List<Integer> projectProgress;
+
+    @Query
+    private String partyB;
 }

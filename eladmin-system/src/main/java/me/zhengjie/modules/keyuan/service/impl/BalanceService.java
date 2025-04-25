@@ -24,6 +24,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -38,20 +39,27 @@ public class BalanceService {
 
     private final KingdeeService kingdeeService;
 
+
     public BalanceData getBalanceData() {
+        return getBalanceData(System.currentTimeMillis());
+    }
+
+    public BalanceData getBalanceData(long endTime) {
         BalanceData balanceData = new BalanceData();
         SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
-        Calendar calendar = CalendarUtils.getBeginningOfYear();
-        criteria.setReceiveTime(new Timestamp(calendar.getTimeInMillis()));
+        List<Timestamp> receiveTimeList = new ArrayList<>();
+        receiveTimeList.add(new Timestamp(CalendarUtils.getBeginningOfYear().getTimeInMillis()));
+        receiveTimeList.add(new Timestamp(endTime));
+        criteria.setReceiveTime(receiveTimeList);
         List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(criteria);
         Map<Long, SysProjectDetailDto> detailMap = new HashMap<>();
-        balanceData.setDepartmentRows(buildDepartmentRows(sysProjectReceiveDtoList, detailMap));
-        balanceData.setPersonRows(buildPersonRows(sysProjectReceiveDtoList, detailMap));
+        balanceData.setDepartmentRows(buildDepartmentRows(sysProjectReceiveDtoList, detailMap, endTime));
+        balanceData.setPersonRows(buildPersonRows(sysProjectReceiveDtoList, detailMap, endTime));
         return balanceData;
     }
 
 
-    private List<BalanceTableRow> buildDepartmentRows(List<SysProjectReceiveDto> receiveDtoList, Map<Long, SysProjectDetailDto> detailMap) {
+    private List<BalanceTableRow> buildDepartmentRows(List<SysProjectReceiveDto> receiveDtoList, Map<Long, SysProjectDetailDto> detailMap, long end) {
         Map<String, Map<Integer, long[]>> receiveByDepartmentAndType = new HashMap<>();
         Arrays.stream(ProjectUtils.PROJECT_DEPARTMENTS).forEach(e -> {
             Map<Integer, long[]> map = new HashMap<>(Map.of(
@@ -73,7 +81,7 @@ public class BalanceService {
             long[] salesAmounts = receiveByDepartmentAndType.get(ProjectUtils.PROJECT_DEPARTMENT_SALES).computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
             long[] manageAmounts = receiveByDepartmentAndType.get(ProjectUtils.PROJECT_DEPARTMENT_MANAGEMENT).computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
             long[] presidentAmounts = receiveByDepartmentAndType.get(ProjectUtils.PROJECT_DEPARTMENT_PRESIDENT).computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
-            if (receiveDto.getReceiveTime().getTime() < CalendarUtils.getBeginningOfMonth().getTimeInMillis()) {
+            if (receiveDto.getReceiveTime().getTime() < CalendarUtils.getBeginningOfMonth(end).getTimeInMillis()) {
                 techAmounts[0] += techAmount;
                 salesAmounts[0] += salesAmount;
                 manageAmounts[0] += managementAmount;
@@ -99,7 +107,7 @@ public class BalanceService {
         return departmentRows;
     }
 
-    private List<BalanceTableRow> buildPersonRows(List<SysProjectReceiveDto> receiveDtoList, Map<Long, SysProjectDetailDto> detailMap) {
+    private List<BalanceTableRow> buildPersonRows(List<SysProjectReceiveDto> receiveDtoList, Map<Long, SysProjectDetailDto> detailMap, long end) {
         Map<Long, Map<Integer, long[]>> receiveByPersonAndType = new HashMap<>();
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
             SysProjectDetailDto detail = detailMap.computeIfAbsent(receiveDto.getProjectId(), sysProjectDetailService::findById);
@@ -109,7 +117,7 @@ public class BalanceService {
             long salesAmount = (long) receiveAmount * detail.getSalesPercent() / 100;
             Map<Integer, long[]> typeMap = receiveByPersonAndType.computeIfAbsent(detail.getSalesPerson(), k -> new HashMap<>());
             long[] amounts = typeMap.computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
-            if (receiveDto.getReceiveTime().getTime() < CalendarUtils.getBeginningOfMonth().getTimeInMillis()) {
+            if (receiveDto.getReceiveTime().getTime() < CalendarUtils.getBeginningOfMonth(end).getTimeInMillis()) {
                 amounts[0] += salesAmount;
             } else {
                 amounts[1] += salesAmount;
@@ -121,10 +129,13 @@ public class BalanceService {
         receiveByPersonAndType.forEach((k, v) -> {
             AccountBalanceData data = new AccountBalanceData();
             SysProjectPersonDto personDto = personMap.get(k);
-            if (personDto.getInitialBalance() != null && StringUtils.isNotEmpty(personDto.getAccountNumber())) {
-                data = kingdeeService.getAccountBalanceByNumber(personDto.getAccountNumber());
-                data.setInitialBalance(personDto.getInitialBalance());
+            if (StringUtils.isNotEmpty(personDto.getReserveFundNumber()) || StringUtils.isNotEmpty(personDto.getAccountNumber())) {
+                int month = CalendarUtils.getBeginningOfMonth(end).get(Calendar.MONTH) + 1;
+                AccountBalanceData accountData = kingdeeService.getAccountBalanceByNumber(personDto.getAccountNumber(), month);
+                AccountBalanceData reserveFundData = kingdeeService.getAccountBalanceByNumber(personDto.getReserveFundNumber(), month);
+                data = AccountBalanceData.add(accountData, reserveFundData);
             }
+            Optional.ofNullable(personDto.getInitialBalance()).ifPresent(data::setInitialBalance);
             BalanceTableRow row = typeMapToRow(v, data);
             row.setName(personMap.get(k).getName());
             departmentRows.add(row);
@@ -152,7 +163,7 @@ public class BalanceService {
         row.setExpenseThisMonth(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(expenseData.getExpenseThisMonth())));
         row.setExpenseThisYear(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(expenseData.getExpenseThisYear())));
         long sum0 = typeMap.values().stream().mapToLong(val -> val[0]).sum() - expenseData.getExpenseLast() + expenseData.getInitialBalance();
-        long sum1 = typeMap.values().stream().mapToLong(val -> val[1]).sum() - expenseData.getExpenseThisMonth() + expenseData.getInitialBalance();
+        long sum1 = typeMap.values().stream().mapToLong(val -> val[1]).sum() - expenseData.getExpenseThisMonth();
         long sum2 = typeMap.values().stream().mapToLong(val -> val[2]).sum() - expenseData.getExpenseThisYear() + expenseData.getInitialBalance();
         row.setSumLast(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(sum0)));
         row.setSumThisMonth(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(sum1)));
