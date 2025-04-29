@@ -74,6 +74,22 @@ public class SysProjectDetailTask {
         return Math.max(shouldPay - receive, 0);
     }
 
+    public void updateProjectProgress() {
+        SysProjectDetailQueryCriteria criteria = new SysProjectDetailQueryCriteria();
+        criteria.setProjectProgress(List.of(0, 99));
+        List<SysProjectDetailDto> sysProjectDetailDtoList = sysProjectDetailService.queryAll(criteria);
+        for (SysProjectDetailDto sysProjectDetailDto : sysProjectDetailDtoList) {
+            if (sysProjectDetailDto.getReceiveAmount() != null &&
+                    sysProjectDetailDto.getContractAmount() != null &&
+                    sysProjectDetailDto.getContractAmount() != 0 &&
+                    sysProjectDetailDto.getReceiveAmount() >= sysProjectDetailDto.getContractAmount()) {
+
+                sysProjectDetailDto.setProjectProgress(100);
+                sysProjectDetailService.update(sysProjectDetailMapper.toEntity(sysProjectDetailDto));
+            }
+        }
+    }
+
     public void updateGuaranteeStatus() {
         log.info("updateGuaranteeStatus begin");
         long st = System.currentTimeMillis();

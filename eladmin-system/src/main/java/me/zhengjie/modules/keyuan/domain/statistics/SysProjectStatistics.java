@@ -16,9 +16,11 @@ import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Data
 public class SysProjectStatistics {
@@ -29,7 +31,7 @@ public class SysProjectStatistics {
     /**
      * 合同量统计数据
      */
-    Map<String, Map<String, double[]>> contractByYearAndType = new HashMap<>();
+    Map<String, Map<String, double[]>> contractByYearAndType = new TreeMap<>(Comparator.reverseOrder());
     ChartOption contractChartOption = new ChartOption();
     Map<String, Double> contractTotalByType = new HashMap<>();
 
@@ -50,7 +52,7 @@ public class SysProjectStatistics {
     /**
      * 收款量统计数据
      */
-    Map<String, Map<String, double[]>> receiveByYearAndType = new HashMap<>();
+    Map<String, Map<String, double[]>> receiveByYearAndType = new TreeMap<>(Comparator.reverseOrder());
     ChartOption receiveChartOption = new ChartOption();
     Map<String, Double> receiveTotalByType = new HashMap<>();
     Map<String, Map<String, double[]>> receiveByTypeAndRegion = ProjectUtils.generateTypeMap();

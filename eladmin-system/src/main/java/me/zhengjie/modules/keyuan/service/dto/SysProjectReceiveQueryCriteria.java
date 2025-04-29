@@ -33,4 +33,10 @@ public class SysProjectReceiveQueryCriteria {
 
     @Query(type = Query.Type.BETWEEN)
     private List<Timestamp> receiveTime;
+
+    @Query(type = Query.Type.BETWEEN)
+    private List<Timestamp> invoiceTime;
+
+    @Query(type = Query.Type.GREATER_THAN_NQ)
+    private Integer invoiceAmount;
 }

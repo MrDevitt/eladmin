@@ -16,8 +16,6 @@
 package me.zhengjie.modules.keyuan.service;
 
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
-import me.zhengjie.modules.keyuan.domain.SysShouldReceiveData;
-import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.utils.PageResult;
@@ -26,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author MrDevitt
@@ -90,7 +89,5 @@ public interface SysProjectDetailService {
      */
     void download(List<SysProjectDetailDto> all, HttpServletResponse response) throws IOException;
 
-    SysProjectStatistics getSysProjectStatisticsInfo();
-
-    SysShouldReceiveData getSysShouldReceiveData();
+    Map<Long, SysProjectDetailDto> getSysProjectDetailDtoMap();
 }

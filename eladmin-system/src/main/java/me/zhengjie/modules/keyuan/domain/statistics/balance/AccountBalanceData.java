@@ -1,4 +1,4 @@
-package me.zhengjie.modules.keyuan.domain.balance;
+package me.zhengjie.modules.keyuan.domain.statistics.balance;
 
 import lombok.Data;
 

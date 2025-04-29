@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.exception.EntityExistException;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
-import me.zhengjie.modules.keyuan.domain.SysShouldReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectReceiveRepository;
@@ -28,10 +27,8 @@ import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
-import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
-import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectReceiveMapper;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
@@ -46,9 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,9 +67,9 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
 
     private final SysProjectReceiveRepository sysProjectReceiveRepository;
 
-    private final SysProjectReceiveMapper sysProjectReceiveMapper;
-
     private final SysProjectPersonService projectPersonService;
+
+    private Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = null;
 
 
     @Override
@@ -108,6 +102,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         }
         sysProjectDetailRepository.save(resources);
         SysProjectStatistics.CACHE = null;
+        sysProjectDetailDtoMap = null;
     }
 
     @Override
@@ -125,6 +120,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         sysProjectDetail.copy(resources);
         sysProjectDetailRepository.save(sysProjectDetail);
         SysProjectStatistics.CACHE = null;
+        sysProjectDetailDtoMap = null;
     }
 
     @Override
@@ -140,6 +136,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         }
         sysProjectReceiveRepository.deleteAllById(receiveIdSet);
         SysProjectStatistics.CACHE = null;
+        sysProjectDetailDtoMap = null;
     }
 
     @Override
@@ -176,189 +173,15 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
     }
 
     @Override
-    public SysProjectStatistics getSysProjectStatisticsInfo() {
-        if (SysProjectStatistics.CACHE == null) {
-            SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
-            List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(new SysProjectDetailQueryCriteria());
-            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = projectPersonService.getIdToPersonMap();
-            buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap);
-
-            Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailDtoList.stream().collect(Collectors.toMap(
+    public Map<Long, SysProjectDetailDto> getSysProjectDetailDtoMap() {
+        if (sysProjectDetailDtoMap == null) {
+            sysProjectDetailDtoMap = queryAll(new SysProjectDetailQueryCriteria()).stream().collect(Collectors.toMap(
                     SysProjectDetailDto::getId,
                     Function.identity(),
                     (x, y) -> x
             ));
-            List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveMapper.toDto(sysProjectReceiveRepository.findAll());
-            buildReceiveStatistics(sysProjectStatistics, sysProjectReceiveDtoList, sysProjectDetailDtoMap, sysProjectPersonDtoMap);
-
-            sysProjectStatistics.calcInnerData();
-            SysProjectStatistics.CACHE = sysProjectStatistics;
         }
-        return SysProjectStatistics.CACHE;
-    }
-
-    private static void buildContractStatistics(
-            SysProjectStatistics sysProjectStatistics,
-            List<SysProjectDetailDto> sysProjectDetailDtoList,
-            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap) {
-        String currentYear = getLastMonthYear();
-        for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
-            double contractAmount = ProjectUtils.dbPriceToRealPrice(detailDto.getContractAmount());
-            String projectType = ProjectUtils.projectTypeToName(detailDto.getProjectType());
-
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(detailDto.getCreateTime().getTime());
-            int month = calendar.get(Calendar.MONTH);
-            String year = String.valueOf(calendar.get(Calendar.YEAR));
-
-            Map<String, double[]> typeMap = sysProjectStatistics.getContractByYearAndType().computeIfAbsent(year, k -> new HashMap<>());
-            double[] typeMonthData = typeMap.computeIfAbsent(projectType, k -> new double[13]);
-            typeMonthData[month] += contractAmount;
-            typeMonthData[12] += contractAmount;
-
-            if (currentYear.equals(year)) {
-                Map<String, double[]> regionMap = sysProjectStatistics.getContractByTypeAndRegion().get(projectType);
-                double[] regionData = regionMap.computeIfAbsent(detailDto.getProjectRegion(), k -> new double[13]);
-                regionData[month] += contractAmount;
-                regionData[12] += contractAmount;
-
-                String personName = sysProjectPersonDtoMap.get(detailDto.getSalesPerson()).getName();
-                Map<String, double[]> personMap = sysProjectStatistics.getContractByTypeAndPerson().get(projectType);
-                double[] personData = personMap.computeIfAbsent(personName, k -> new double[13]);
-                personData[month] += contractAmount;
-                personData[12] += contractAmount;
-
-                Map<String, double[]> departmentMap = sysProjectStatistics.getContractByTypeAndDepartment().get(projectType);
-                fillDepartmentMap(departmentMap, detailDto, month, contractAmount);
-
-                Map<String, double[]> personShareMap = sysProjectStatistics.getContractShareByTypeAndPerson().get(projectType);
-                double[] personShareData = personShareMap.computeIfAbsent(personName, k -> new double[13]);
-                personShareData[month] += contractAmount * detailDto.getSalesPercent() / 100;
-                personShareData[12] += contractAmount * detailDto.getSalesPercent() / 100;
-
-                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
-                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamContractByRegionAndPerson().get(detailDto.getProjectRegion());
-                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
-                    examPersonData[month] += contractAmount;
-                    examPersonData[12] += contractAmount;
-                }
-            }
-
-        }
-    }
-
-    private static void fillDepartmentMap(Map<String, double[]> departmentMap, SysProjectDetailDto detailDto, int month, double amount) {
-        double[] presidentData = departmentMap.computeIfAbsent(ProjectUtils.PROJECT_DEPARTMENT_PRESIDENT, k -> new double[13]);
-        double[] managementData = departmentMap.computeIfAbsent(ProjectUtils.PROJECT_DEPARTMENT_MANAGEMENT, k -> new double[13]);
-        double[] salesData = departmentMap.computeIfAbsent(ProjectUtils.PROJECT_DEPARTMENT_SALES, k -> new double[13]);
-        double[] techData = departmentMap.computeIfAbsent(ProjectUtils.PROJECT_DEPARTMENT_TECH, k -> new double[13]);
-
-        double presidentAmount = amount * detailDto.getPresidentPercent() / 100;
-        double managementAmount = amount * detailDto.getManagementPercent() / 100;
-        double salesAmount = amount * detailDto.getSalesPercent() / 100;
-        double techAmount = amount * detailDto.getTechnicalPercent() / 100;
-
-        presidentData[month] += presidentAmount;
-        presidentData[12] += presidentAmount;
-        managementData[month] += managementAmount;
-        managementData[12] += managementAmount;
-        salesData[month] += salesAmount;
-        salesData[12] += salesAmount;
-        techData[month] += techAmount;
-        techData[12] += techAmount;
-    }
-
-    private static void buildReceiveStatistics(
-            SysProjectStatistics sysProjectStatistics,
-            List<SysProjectReceiveDto> sysProjectReceiveDtoList,
-            Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap,
-            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap) {
-        String currentYear = getLastMonthYear();
-        for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoList) {
-            double receiveAmount = ProjectUtils.dbPriceToRealPrice(receiveDto.getReceiveAmount());
-            SysProjectDetailDto detailDto = sysProjectDetailDtoMap.get(receiveDto.getProjectId());
-            if (detailDto == null) {
-                log.error("收款数据不存在！ receiveDto:{}", receiveDto);
-                continue;
-            }
-
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(receiveDto.getReceiveTime().getTime());
-            int month = calendar.get(Calendar.MONTH);
-            String year = String.valueOf(calendar.get(Calendar.YEAR));
-            String projectType = ProjectUtils.projectTypeToName(detailDto.getProjectType());
-
-            Map<String, double[]> typeMap = sysProjectStatistics.getReceiveByYearAndType().computeIfAbsent(year, k -> new HashMap<>());
-            double[] typeMonthData = typeMap.computeIfAbsent(projectType, k -> new double[13]);
-            typeMonthData[month] += receiveAmount;
-            typeMonthData[12] += receiveAmount;
-
-            if (currentYear.equals(year)) {
-                Map<String, double[]> regionMap = sysProjectStatistics.getReceiveByTypeAndRegion().get(projectType);
-                double[] regionData = regionMap.computeIfAbsent(detailDto.getProjectRegion(), k -> new double[13]);
-                regionData[month] += receiveAmount;
-                regionData[12] += receiveAmount;
-
-                Map<String, double[]> personMap = sysProjectStatistics.getReceiveByTypeAndPerson().get(projectType);
-                String personName = sysProjectPersonDtoMap.get(detailDto.getSalesPerson()).getName();
-                double[] personData = personMap.computeIfAbsent(personName, k -> new double[13]);
-                personData[month] += receiveAmount;
-                personData[12] += receiveAmount;
-
-                Map<String, double[]> departmentMap = sysProjectStatistics.getReceiveByTypeAndDepartment().get(projectType);
-                fillDepartmentMap(departmentMap, detailDto, month, receiveAmount);
-
-                Map<String, double[]> personShareMap = sysProjectStatistics.getReceiveShareByTypeAndPerson().get(projectType);
-                double[] personShareData = personShareMap.computeIfAbsent(personName, k -> new double[13]);
-                personShareData[month] += receiveAmount * detailDto.getSalesPercent() / 100;
-                personShareData[12] += receiveAmount * detailDto.getSalesPercent() / 100;
-
-                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
-                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamReceiveByRegionAndPerson().get(detailDto.getProjectRegion());
-                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
-                    examPersonData[month] += receiveAmount;
-                    examPersonData[12] += receiveAmount;
-                }
-            }
-        }
-    }
-
-    private static String getLastMonthYear() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MONTH, -1);
-        return String.valueOf(calendar.get(Calendar.YEAR));
-    }
-
-    @Override
-    public SysShouldReceiveData getSysShouldReceiveData() {
-        SysShouldReceiveData sysShouldReceiveData = new SysShouldReceiveData();
-        SysProjectDetailQueryCriteria queryCriteria = new SysProjectDetailQueryCriteria();
-        queryCriteria.setShouldReceiveAmount(0);
-        List<SysProjectDetailDto> sysProjectDetailDtoList = queryAll(queryCriteria);
-
-        Map<Long, Map<String, Double>> shouldReceiveByNameAndType = new HashMap<>();
-        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = projectPersonService.getIdToPersonMap();
-        for (SysProjectDetailDto sysProjectDetailDto : sysProjectDetailDtoList) {
-            String type = ProjectUtils.projectTypeToName(sysProjectDetailDto.getProjectType());
-            SysProjectPersonDto personDto = sysProjectPersonDtoMap.get(sysProjectDetailDto.getSalesPerson());
-            Map<String, Double> shouldReceiveByType = shouldReceiveByNameAndType.computeIfAbsent(personDto.getId(), k -> new HashMap<>());
-            double currentAmount = shouldReceiveByType.computeIfAbsent(type, k -> 0d);
-            double totalAmount = shouldReceiveByType.computeIfAbsent("sum", k -> 0d);
-            shouldReceiveByType.put(type, currentAmount + ProjectUtils.dbPriceToRealPrice(sysProjectDetailDto.getShouldReceiveAmount()));
-            shouldReceiveByType.put("sum", totalAmount + ProjectUtils.dbPriceToRealPrice(sysProjectDetailDto.getShouldReceiveAmount()));
-        }
-
-        List<Map<String, String>> tableData = new ArrayList<>();
-        shouldReceiveByNameAndType.forEach((key, value) -> {
-            Map<String, String> data = new HashMap<>();
-            String name = sysProjectPersonDtoMap.get(key).getName();
-            data.put("name", name);
-            value.forEach((key1, value1) -> data.put(key1, String.format("%.2f", value1)));
-            tableData.add(data);
-        });
-        tableData.sort(Comparator.comparing(a -> -Integer.parseInt(a.get("sum").substring(0, a.get("sum").length() - 3))));
-        sysShouldReceiveData.setTableData(tableData);
-        return sysShouldReceiveData;
+        return sysProjectDetailDtoMap;
     }
 
 }

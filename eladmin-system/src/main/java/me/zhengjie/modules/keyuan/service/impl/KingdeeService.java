@@ -15,7 +15,7 @@ import com.kingdee.service.data.entity.AsterAuthorizeRes;
 import com.kingdee.service.unit.SHAUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.zhengjie.modules.keyuan.domain.balance.AccountBalanceData;
+import me.zhengjie.modules.keyuan.domain.statistics.balance.AccountBalanceData;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
