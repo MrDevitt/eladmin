@@ -107,4 +107,15 @@ public class KingdeeService {
         data.setExpenseThisYear(ProjectUtils.realPriceToDbPrice(row.getYtdDebit()));
         return data;
     }
+
+    public AccountBalanceData getAccountBalanceByNumberList(List<String> accountNumberList, int month) {
+        AccountBalanceData res = new AccountBalanceData();
+        if (accountNumberList == null) {
+            return res;
+        }
+        for (String accountNumber : accountNumberList) {
+            res = AccountBalanceData.add(res, getAccountBalanceByNumber(accountNumber, month));
+        }
+        return res;
+    }
 }

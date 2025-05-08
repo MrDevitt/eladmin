@@ -8,6 +8,7 @@ import me.zhengjie.modules.keyuan.domain.statistics.SysShouldReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.AccountBalanceData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceTableRow;
+import me.zhengjie.modules.keyuan.domain.statistics.balance.ProjectDepartment;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
@@ -18,12 +19,12 @@ import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.utils.CalendarUtils;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -248,51 +249,58 @@ public class SysProjectStatisticsService {
 
 
     private List<BalanceTableRow> buildDepartmentRows(List<SysProjectReceiveDto> receiveDtoList, Map<Long, SysProjectDetailDto> detailMap, long end) {
-        Map<String, Map<Integer, long[]>> receiveByDepartmentAndType = new HashMap<>();
-        Arrays.stream(ProjectUtils.PROJECT_DEPARTMENTS).forEach(e -> {
-            Map<Integer, long[]> map = new HashMap<>(Map.of(
-                    ProjectUtils.PROJECT_TYPE_EXAM, new long[]{0, 0, 0},
-                    ProjectUtils.PROJECT_TYPE_SUPERVISE, new long[]{0, 0, 0},
-                    ProjectUtils.PROJECT_TYPE_DESIGN, new long[]{0, 0, 0}));
-            receiveByDepartmentAndType.put(e, map);
-        });
+        List<ProjectDepartment> departmentList = ProjectUtils.PROJECT_DEPARTMENT_LIST.stream().map(ProjectDepartment::new).collect(Collectors.toList());
+        long beginningOfMonth = CalendarUtils.getBeginningOfMonth(end).getTimeInMillis();
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
             SysProjectDetailDto detail = detailMap.computeIfAbsent(receiveDto.getProjectId(), sysProjectDetailService::findById);
             int projectType = detail.getProjectType();
             int receiveAmount = receiveDto.getReceiveAmount();
-            //用long防止乘后int溢出
-            long techAmount = (long) receiveAmount * detail.getTechnicalPercent() / 100;
-            long salesAmount = (long) receiveAmount * detail.getSalesPercent() / 100;
-            long managementAmount = (long) receiveAmount * detail.getManagementPercent() / 100;
-            long presidentAmount = (long) receiveAmount * detail.getPresidentPercent() / 100;
-            long[] techAmounts = receiveByDepartmentAndType.get(ProjectUtils.PROJECT_DEPARTMENT_TECH).computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
-            long[] salesAmounts = receiveByDepartmentAndType.get(ProjectUtils.PROJECT_DEPARTMENT_SALES).computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
-            long[] manageAmounts = receiveByDepartmentAndType.get(ProjectUtils.PROJECT_DEPARTMENT_MANAGEMENT).computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
-            long[] presidentAmounts = receiveByDepartmentAndType.get(ProjectUtils.PROJECT_DEPARTMENT_PRESIDENT).computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
-            if (receiveDto.getReceiveTime().getTime() < CalendarUtils.getBeginningOfMonth(end).getTimeInMillis()) {
-                techAmounts[0] += techAmount;
-                salesAmounts[0] += salesAmount;
-                manageAmounts[0] += managementAmount;
-                presidentAmounts[0] += presidentAmount;
-            } else {
-                techAmounts[1] += techAmount;
-                salesAmounts[1] += salesAmount;
-                manageAmounts[1] += managementAmount;
-                presidentAmounts[1] += presidentAmount;
+            String region = detail.getProjectRegion();
+
+            for (ProjectDepartment department : departmentList) {
+                int percent = department.getPercentageGetter().apply(detail);
+                long amount = (long) receiveAmount * percent / 100;
+                long[] amounts = department.getReceiveByType().computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
+                Map<String, long[]> regionMap = department.getReceiveByTypeAndRegion().computeIfAbsent(projectType, k -> new HashMap<>());
+                long[] regionAmounts = regionMap.computeIfAbsent(region, k -> new long[]{0, 0, 0});
+                if (receiveDto.getReceiveTime().getTime() < beginningOfMonth) {
+                    amounts[0] += amount;
+                    regionAmounts[0] += amount;
+                } else {
+                    amounts[1] += amount;
+                    regionAmounts[1] += amount;
+                }
+                amounts[2] += amount;
+                regionAmounts[2] += amount;
             }
-            techAmounts[2] += techAmount;
-            salesAmounts[2] += salesAmount;
-            manageAmounts[2] += managementAmount;
-            presidentAmounts[2] += presidentAmount;
         }
         List<BalanceTableRow> departmentRows = new ArrayList<>();
-        receiveByDepartmentAndType.forEach((k, v) -> {
-            BalanceTableRow row = typeMapToRow(v);
-            row.setName(k);
+        int month = CalendarUtils.getBeginningOfMonth(end).get(Calendar.MONTH) + 1;
+        departmentList.forEach(department -> {
+            BalanceTableRow row = departmentToRow(department, null, month);
             departmentRows.add(row);
         });
-        departmentRows.sort(BalanceTableRow.COMPARATOR_DESC);
         return departmentRows;
+    }
+
+    private BalanceTableRow departmentToRow(ProjectDepartment department, ProjectDepartment parent, int month) {
+        if (department.getDataCalculator() != null && parent != null) {
+            department.setReceiveByTypeAndRegion(parent.getReceiveByTypeAndRegion());
+            department.setReceiveByType(department.getDataCalculator().apply(parent));
+        }
+        AccountBalanceData expense = kingdeeService.getAccountBalanceByNumberList(department.getAccountNumberList(), month);
+        expense.setInitialBalance(department.getInitialBalance());
+        BalanceTableRow row = typeMapToRow(department.getReceiveByType(), expense);
+        row.setName(department.getName());
+        if (CollectionUtils.isNotEmpty(department.getChildren())) {
+            List<BalanceTableRow> childrenList = new ArrayList<>();
+            for (ProjectDepartment children : department.getChildren()) {
+                childrenList.add(departmentToRow(children, department, month));
+            }
+            childrenList.sort(BalanceTableRow.COMPARATOR_DESC);
+            row.setChildren(childrenList);
+        }
+        return row;
     }
 
     private List<BalanceTableRow> buildPersonRows(List<SysProjectReceiveDto> receiveDtoList, Map<Long, SysProjectDetailDto> detailMap, long end) {
@@ -332,10 +340,6 @@ public class SysProjectStatisticsService {
         return departmentRows;
     }
 
-    private BalanceTableRow typeMapToRow(Map<Integer, long[]> typeMap) {
-        return typeMapToRow(typeMap, new AccountBalanceData());
-    }
-
     private BalanceTableRow typeMapToRow(Map<Integer, long[]> typeMap, AccountBalanceData expenseData) {
         BalanceTableRow row = new BalanceTableRow();
         row.setExamLast(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(typeMap.getOrDefault(ProjectUtils.PROJECT_TYPE_EXAM, new long[]{0, 0, 0})[0])));
@@ -347,6 +351,9 @@ public class SysProjectStatisticsService {
         row.setDesignLast(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(typeMap.getOrDefault(ProjectUtils.PROJECT_TYPE_DESIGN, new long[]{0, 0, 0})[0])));
         row.setDesignThisMonth(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(typeMap.getOrDefault(ProjectUtils.PROJECT_TYPE_DESIGN, new long[]{0, 0, 0})[1])));
         row.setDesignThisYear(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(typeMap.getOrDefault(ProjectUtils.PROJECT_TYPE_DESIGN, new long[]{0, 0, 0})[2])));
+        row.setOtherLast(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(typeMap.getOrDefault(ProjectUtils.PROJECT_TYPE_OTHER, new long[]{0, 0, 0})[0])));
+        row.setOtherThisMonth(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(typeMap.getOrDefault(ProjectUtils.PROJECT_TYPE_OTHER, new long[]{0, 0, 0})[1])));
+        row.setOtherThisYear(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(typeMap.getOrDefault(ProjectUtils.PROJECT_TYPE_OTHER, new long[]{0, 0, 0})[2])));
         row.setExpenseLast(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(expenseData.getExpenseLast())));
         row.setExpenseThisMonth(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(expenseData.getExpenseThisMonth())));
         row.setExpenseThisYear(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(expenseData.getExpenseThisYear())));
@@ -393,6 +400,11 @@ public class SysProjectStatisticsService {
             row.setName(k);
             row.setInvoiced(ProjectUtils.dbPriceToRealPriceString(v[0]));
             row.setToInvoice(ProjectUtils.dbPriceToRealPriceString(v[1]));
+            if (ProjectUtils.GENERAL_TAXPAYERS.contains(k)) {
+                row.setRemaining("");
+            } else {
+                row.setRemaining(ProjectUtils.dbPriceToRealPriceString(ProjectUtils.MAX_INVOICE_AMOUNT - v[0]));
+            }
             invoiceTableRowList.add(row);
         });
         return invoiceTableRowList;

@@ -7,4 +7,5 @@ public class InvoiceTableRow {
     private String name = "";
     private String invoiced = "0.00";
     private String toInvoice = "0.00";
+    private String remaining = "0.00";
 }
