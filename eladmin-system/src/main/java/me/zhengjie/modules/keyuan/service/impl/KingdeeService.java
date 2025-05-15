@@ -103,8 +103,8 @@ public class KingdeeService {
             return data;
         }
         data.setExpenseLast(ProjectUtils.realPriceToDbPrice(row.getBeginBal()));
-        data.setExpenseThisMonth(ProjectUtils.realPriceToDbPrice(row.getDebit()));
-        data.setExpenseThisYear(ProjectUtils.realPriceToDbPrice(row.getYtdDebit()));
+        data.setExpenseThisMonth(ProjectUtils.realPriceToDbPrice(row.getDebit()) - ProjectUtils.realPriceToDbPrice(row.getCredit()));
+        data.setExpenseThisYear(ProjectUtils.realPriceToDbPrice(row.getEndBal()));
         return data;
     }
 

@@ -322,6 +322,7 @@ public class SysProjectStatisticsService {
         }
         List<BalanceTableRow> departmentRows = new ArrayList<>();
         Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getIdToPersonMap();
+        Map<Long, Long> remainingByPerson = getPersonRemainingMap();
         receiveByPersonAndType.forEach((k, v) -> {
             AccountBalanceData data = new AccountBalanceData();
             SysProjectPersonDto personDto = personMap.get(k);
@@ -334,6 +335,7 @@ public class SysProjectStatisticsService {
             Optional.ofNullable(personDto.getInitialBalance()).ifPresent(data::setInitialBalance);
             BalanceTableRow row = typeMapToRow(v, data);
             row.setName(personMap.get(k).getName());
+            row.setRemaining(ProjectUtils.dbPriceToRealPriceString(remainingByPerson.getOrDefault(k, 0L)));
             departmentRows.add(row);
         });
         departmentRows.sort(BalanceTableRow.COMPARATOR_DESC);
@@ -367,6 +369,40 @@ public class SysProjectStatisticsService {
         return row;
     }
 
+    public Map<Long, Long> getPersonRemainingMap() {
+        List<SysProjectDetailDto> detailDtoList = sysProjectDetailService.queryAll(new SysProjectDetailQueryCriteria());
+        Map<Long, Long> remainingByPerson = new HashMap<>();
+        for (SysProjectDetailDto dto : detailDtoList) {
+            long remaining = dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0);
+            remaining = remaining * dto.getSalesPercent() / 100;
+            remainingByPerson.put(dto.getSalesPerson(), remainingByPerson.getOrDefault(dto.getSalesPerson(), 0L) + Math.max(remaining, 0));
+        }
+        return remainingByPerson;
+    }
+
+    public Map<Long, Long> getBalancePersonMap() {
+        Map<Long, Long> personBalanceMap = new HashMap<>();
+        SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
+        criteria.setReceiveTime(List.of(new Timestamp(CalendarUtils.getBeginningOfYear().getTimeInMillis()), new Timestamp(System.currentTimeMillis())));
+        List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryAll(criteria);
+        Map<Long, SysProjectDetailDto> detailMap = new HashMap<>();
+        for (SysProjectReceiveDto receiveDto : receiveDtoList) {
+            SysProjectDetailDto detail = detailMap.computeIfAbsent(receiveDto.getProjectId(), sysProjectDetailService::findById);
+            int receiveAmount = receiveDto.getReceiveAmount();
+            long salesAmount = (long) receiveAmount * detail.getSalesPercent() / 100;
+            long person = detail.getSalesPerson();
+            personBalanceMap.put(person, personBalanceMap.getOrDefault(person, 0L) + salesAmount);
+        }
+        Map<Long, SysProjectPersonDto> personDtoMap = sysProjectPersonService.getIdToPersonMap();
+        for (Map.Entry<Long, Long> entry : personBalanceMap.entrySet()) {
+            SysProjectPersonDto personDto = personDtoMap.get(entry.getKey());
+            AccountBalanceData data = kingdeeService.getAccountBalanceByNumberList(List.of(
+                    Optional.ofNullable(personDto.getAccountNumber()).orElse(""),
+                    Optional.ofNullable(personDto.getReserveFundNumber()).orElse("")), Calendar.getInstance().get(Calendar.MONTH) + 1);
+            entry.setValue(entry.getValue() - data.getExpenseThisYear() + Optional.ofNullable(personDto.getInitialBalance()).orElse(0));
+        }
+        return personBalanceMap;
+    }
 
     public List<InvoiceTableRow> getInvoiceData(long endTime) {
         List<InvoiceTableRow> invoiceTableRowList = new ArrayList<>();

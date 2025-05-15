@@ -22,8 +22,7 @@ import me.zhengjie.modules.keyuan.repository.SysProjectGuaranteeRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectGuaranteeService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
-import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
-import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
+import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
@@ -47,7 +46,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author MrDevitt
@@ -65,6 +63,10 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
     private final SysProjectPersonService sysProjectPersonService;
 
     private final SysProjectDetailService sysProjectDetailService;
+    private final SysProjectReceiveService sysProjectReceiveService;
+    private final KingdeeService kingdeeService;
+    private final SysProjectStatisticsService sysProjectStatisticsService;
+
 
     @Override
     public PageResult<SysProjectGuaranteeDto> queryAll(SysProjectGuaranteeQueryCriteria criteria, Pageable pageable) {
@@ -143,12 +145,8 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
             statusMap.put(dto.getStatus(), amount + dto.getGuaranteeAmount());
             statusMap.put(-1, totalAmount + dto.getGuaranteeAmount());
         }
-        List<SysProjectDetailDto> detailDtoList = sysProjectDetailService.queryAll(new SysProjectDetailQueryCriteria());
-        Map<Long, Integer> remainingByPerson = new HashMap<>();
-        for (SysProjectDetailDto dto : detailDtoList) {
-            int remaining = dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0);
-            remainingByPerson.put(dto.getSalesPerson(), remainingByPerson.getOrDefault(dto.getSalesPerson(), 0) + Math.max(remaining, 0));
-        }
+        Map<Long, Long> remainingByPerson = sysProjectStatisticsService.getPersonRemainingMap();
+        Map<Long, Long> balanceByPerson = sysProjectStatisticsService.getBalancePersonMap();
         List<Map<String, String>> tableData = new ArrayList<>();
         guaranteeByPersonAndStatus.forEach((k, v) -> {
             Map<String, String> data = new HashMap<>();
@@ -156,7 +154,7 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
             data.put("normal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0))));
             data.put("abnormal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0))));
             data.put("sum", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(-1, 0))));
-            int remaining = remainingByPerson.getOrDefault(k, 0) + 10000000 - v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0) * 2;
+            long remaining = 10000000L + remainingByPerson.getOrDefault(k, 0L) + balanceByPerson.getOrDefault(k, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0) * 2;
             data.put("remaining", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(remaining)));
             tableData.add(data);
         });

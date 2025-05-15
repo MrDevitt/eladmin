@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class BalanceTableRow {
     private String name;
+    private String initialBalance = "0.00";
     private String examLast;
     private String examThisMonth;
     private String examThisYear;
@@ -26,7 +27,7 @@ public class BalanceTableRow {
     private String sumLast;
     private String sumThisMonth;
     private String sumThisYear;
-    private String initialBalance = "0.00";
+    private String remaining = "0.00";
 
     private List<BalanceTableRow> children;
 
