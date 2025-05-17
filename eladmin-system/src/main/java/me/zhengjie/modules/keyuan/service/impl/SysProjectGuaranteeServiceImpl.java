@@ -19,10 +19,8 @@ import lombok.RequiredArgsConstructor;
 import me.zhengjie.modules.keyuan.domain.SysGuaranteeData;
 import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
 import me.zhengjie.modules.keyuan.repository.SysProjectGuaranteeRepository;
-import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectGuaranteeService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
-import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
@@ -62,9 +60,6 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
 
     private final SysProjectPersonService sysProjectPersonService;
 
-    private final SysProjectDetailService sysProjectDetailService;
-    private final SysProjectReceiveService sysProjectReceiveService;
-    private final KingdeeService kingdeeService;
     private final SysProjectStatisticsService sysProjectStatisticsService;
 
 
@@ -134,7 +129,7 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
     public SysGuaranteeData getSysGuaranteeData() {
         SysGuaranteeData sysGuaranteeData = new SysGuaranteeData();
         SysProjectGuaranteeQueryCriteria criteria = new SysProjectGuaranteeQueryCriteria();
-        criteria.setNotEqualStatus(SysProjectGuaranteeDto.STATUS_COMPLETE);
+        criteria.setStatus(List.of(SysProjectGuaranteeDto.STATUS_NORMAL, SysProjectGuaranteeDto.STATUS_ABNORMAL));
         List<SysProjectGuaranteeDto> dtoList = queryAll(criteria);
         Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getIdToPersonMap();
         Map<Long, Map<Integer, Integer>> guaranteeByPersonAndStatus = new HashMap<>();

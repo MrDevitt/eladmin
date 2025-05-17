@@ -322,6 +322,13 @@ public class SysProjectStatisticsService {
         }
         List<BalanceTableRow> departmentRows = new ArrayList<>();
         Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getIdToPersonMap();
+        personMap.forEach((k, v) -> {
+            if (v.getInitialBalance() != null ||
+                    StringUtils.isNotEmpty(v.getAccountNumber()) ||
+                    StringUtils.isNotEmpty(v.getReserveFundNumber())) {
+                receiveByPersonAndType.putIfAbsent(k, new HashMap<>());
+            }
+        });
         Map<Long, Long> remainingByPerson = getPersonRemainingMap();
         receiveByPersonAndType.forEach((k, v) -> {
             AccountBalanceData data = new AccountBalanceData();

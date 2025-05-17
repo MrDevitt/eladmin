@@ -68,7 +68,6 @@ public class SysProjectReceiveController {
     @ApiOperation("查询项目收款信息")
     @PreAuthorize("@el.check('sysProjectReceive:list')")
     public ResponseEntity<PageResult<SysProjectReceiveDto>> querySysProjectReceive(SysProjectReceiveQueryCriteria criteria, Pageable pageable) {
-        log.info(criteria.toString());
         return new ResponseEntity<>(sysProjectReceiveService.queryAll(criteria, pageable), HttpStatus.OK);
     }
 

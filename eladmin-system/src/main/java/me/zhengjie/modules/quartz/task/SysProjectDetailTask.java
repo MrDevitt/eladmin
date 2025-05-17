@@ -95,7 +95,7 @@ public class SysProjectDetailTask {
         long st = System.currentTimeMillis();
         try {
             SysProjectGuaranteeQueryCriteria criteria = new SysProjectGuaranteeQueryCriteria();
-            criteria.setStatus(SysProjectGuaranteeDto.STATUS_NORMAL);
+            criteria.setStatus(List.of(SysProjectGuaranteeDto.STATUS_NORMAL));
             List<SysProjectGuaranteeDto> sysProjectGuaranteeDtoList = sysProjectGuaranteeService.queryAll(criteria);
             for (SysProjectGuaranteeDto dto : sysProjectGuaranteeDtoList) {
                 if (dto.getGuaranteeTime().getTime() < st) {

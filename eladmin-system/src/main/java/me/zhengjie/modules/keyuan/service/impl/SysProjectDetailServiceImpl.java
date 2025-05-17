@@ -21,12 +21,13 @@ import me.zhengjie.exception.EntityExistException;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
-import me.zhengjie.modules.keyuan.repository.SysProjectReceiveRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
+import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
@@ -35,6 +36,7 @@ import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
 import me.zhengjie.utils.QueryHelp;
 import me.zhengjie.utils.ValidationUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -65,7 +67,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
     private final SysProjectDetailRepository sysProjectDetailRepository;
     private final SysProjectDetailMapper sysProjectDetailMapper;
 
-    private final SysProjectReceiveRepository sysProjectReceiveRepository;
+    private final SysProjectReceiveService sysProjectReceiveService;
 
     private final SysProjectPersonService projectPersonService;
 
@@ -74,12 +76,14 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
 
     @Override
     public PageResult<SysProjectDetailDto> queryAll(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
+        updateQueryCriteria(criteria);
         Page<SysProjectDetail> page = sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder), pageable);
         return PageUtil.toPage(page.map(sysProjectDetailMapper::toDto));
     }
 
     @Override
     public List<SysProjectDetailDto> queryAll(SysProjectDetailQueryCriteria criteria) {
+        updateQueryCriteria(criteria);
         return sysProjectDetailMapper.toDto(sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder)));
     }
 
@@ -89,6 +93,15 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         SysProjectDetail sysProjectDetail = sysProjectDetailRepository.findById(id).orElseGet(SysProjectDetail::new);
         ValidationUtil.isNull(sysProjectDetail.getId(), "SysProjectDetail", "id", id);
         return sysProjectDetailMapper.toDto(sysProjectDetail);
+    }
+
+    private void updateQueryCriteria(SysProjectDetailQueryCriteria criteria) {
+        if (CollectionUtils.isEmpty(criteria.getReceiveTime())) {
+            return;
+        }
+        SysProjectReceiveQueryCriteria receiveQueryCriteria = new SysProjectReceiveQueryCriteria();
+        receiveQueryCriteria.setReceiveTime(criteria.getReceiveTime());
+        criteria.setIds(sysProjectReceiveService.queryAll(receiveQueryCriteria).stream().map(SysProjectReceiveDto::getProjectId).distinct().collect(Collectors.toList()));
     }
 
     @Override
@@ -130,11 +143,9 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             sysProjectDetailRepository.deleteById(id);
             SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
             criteria.setProjectId(id);
-            sysProjectReceiveRepository
-                    .findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder))
-                    .forEach(e -> receiveIdSet.add(e.getId()));
+            sysProjectReceiveService.queryAll(criteria).forEach(e -> receiveIdSet.add(e.getId()));
         }
-        sysProjectReceiveRepository.deleteAllById(receiveIdSet);
+        sysProjectReceiveService.deleteAll(receiveIdSet.toArray(new Long[0]));
         SysProjectStatistics.CACHE = null;
         sysProjectDetailDtoMap = null;
     }

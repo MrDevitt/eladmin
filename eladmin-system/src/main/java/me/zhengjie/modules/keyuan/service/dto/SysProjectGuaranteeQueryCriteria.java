@@ -32,11 +32,8 @@ public class SysProjectGuaranteeQueryCriteria {
     /**
      * 精确
      */
-    @Query
-    private Integer status;
-
-    @Query(type = Query.Type.NOT_EQUAL, propName = "status")
-    private Integer notEqualStatus;
+    @Query(type = Query.Type.IN)
+    private List<Integer> status;
 
     /**
      * 精确

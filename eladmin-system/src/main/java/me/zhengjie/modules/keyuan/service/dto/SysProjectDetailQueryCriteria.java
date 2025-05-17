@@ -32,6 +32,9 @@ public class SysProjectDetailQueryCriteria {
     @Query
     private Long id;
 
+    @Query(type = Query.Type.IN, propName = "id")
+    private List<Long> ids;
+
     @Query(type = Query.Type.BETWEEN)
     private List<Timestamp> contractTime;
 
@@ -67,4 +70,6 @@ public class SysProjectDetailQueryCriteria {
 
     @Query
     private String partyB;
+
+    private List<Timestamp> receiveTime;
 }
