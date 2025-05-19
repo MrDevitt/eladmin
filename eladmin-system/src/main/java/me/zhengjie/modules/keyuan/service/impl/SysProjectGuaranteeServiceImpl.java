@@ -149,7 +149,7 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
             data.put("normal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0))));
             data.put("abnormal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0))));
             data.put("sum", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(-1, 0))));
-            long remaining = 10000000L + remainingByPerson.getOrDefault(k, 0L) + balanceByPerson.getOrDefault(k, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0) * 2;
+            long remaining = remainingByPerson.getOrDefault(k, 0L) + balanceByPerson.getOrDefault(k, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0);
             data.put("remaining", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(remaining)));
             tableData.add(data);
         });

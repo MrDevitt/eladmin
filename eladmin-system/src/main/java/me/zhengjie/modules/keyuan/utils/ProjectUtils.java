@@ -39,25 +39,25 @@ public class ProjectUtils {
     static {
         ProjectDepartment sales = new ProjectDepartment(PROJECT_DEPARTMENT_SALES);
         sales.setAccountNumberList(List.of("540101", "113302"));
-        sales.setInitialBalance(-82090843L);
+        sales.setInitialBalance(-28914433L);
         sales.setPercentageGetter(SysProjectDetailDto::getSalesPercent);
         PROJECT_DEPARTMENT_LIST.add(sales);
 
         ProjectDepartment management = new ProjectDepartment(PROJECT_DEPARTMENT_MANAGEMENT);
-        management.setAccountNumberList(List.of("540103", "113303", "113317"));
-        management.setInitialBalance(-425042267);
+        management.setAccountNumberList(List.of("540103", "113303"));
+        management.setInitialBalance(-373289417L);
         management.setPercentageGetter(SysProjectDetailDto::getManagementPercent);
         PROJECT_DEPARTMENT_LIST.add(management);
 
         ProjectDepartment president = new ProjectDepartment(PROJECT_DEPARTMENT_PRESIDENT);
-        president.setAccountNumberList(List.of("113304", "11330206"));
-        president.setInitialBalance(356720754L);
+        president.setAccountNumberList(List.of("113304", "540104"));
+        president.setInitialBalance(358220754L);
         president.setPercentageGetter(SysProjectDetailDto::getPresidentPercent);
         PROJECT_DEPARTMENT_LIST.add(president);
 
         ProjectDepartment tech = new ProjectDepartment(PROJECT_DEPARTMENT_TECH);
         tech.setAccountNumberList(List.of("540102", "113301"));
-        tech.setInitialBalance(32665835L);
+        tech.setInitialBalance(31411600L);
         tech.setPercentageGetter(SysProjectDetailDto::getTechnicalPercent);
         tech.setChildren(new ArrayList<>());
         PROJECT_DEPARTMENT_LIST.add(tech);
@@ -97,14 +97,13 @@ public class ProjectUtils {
         Map<String, Pair<List<String>, Long>> superviseMap = new HashMap<>();
         superviseMap.put("康马", Pair.of(List.of("5401020203", "1133010203"), 11115380L));
         superviseMap.put("聂拉木", Pair.of(List.of("5401020207", "1133010205"), 3713918L));
-        superviseMap.put("萨嗄", Pair.of(List.of("1133010206"), 1959487L));
+        superviseMap.put("萨嘎", Pair.of(List.of("5401020209", "1133010206"), 1959487L));
         superviseMap.put("仁布", Pair.of(List.of("5401020205", "1133010209"), 6042130L));
         superviseMap.put("谢通门", Pair.of(List.of("5401020216", "1133010212"), 0L));
         superviseMap.put("岗巴", Pair.of(List.of("5401020202"), 1167580L));
         superviseMap.put("白朗", Pair.of(List.of("5401020204"), -11835924L));
         superviseMap.put("定日", Pair.of(List.of("5401020206", "1133010202"), 8612806L));
         superviseMap.put("日喀则市区", Pair.of(List.of("5401020201"), 0L));
-        superviseMap.put("萨嘎", Pair.of(List.of("5401020209"), 0L));
         superviseMap.put("昌都", Pair.of(List.of("5401020217"), 0L));
         superviseMap.put("总工办", Pair.of(List.of("5401020214", "1133010211"), 10263355L));
         superviseMap.forEach((k, v) -> {
@@ -180,7 +179,7 @@ public class ProjectUtils {
     }
 
     public static long realPriceToDbPrice(String realPrice) {
-        return (long) Double.parseDouble(realPrice) * 100;
+        return (long) (Double.parseDouble(realPrice) * 100);
     }
 
     public static Map<String, Map<String, double[]>> generateTypeMap() {

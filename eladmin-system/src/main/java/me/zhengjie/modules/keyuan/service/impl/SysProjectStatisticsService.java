@@ -434,7 +434,7 @@ public class SysProjectStatisticsService {
             String company = v.getPartyB();
             int[] data = invoiceByCompanyMap.computeIfAbsent(company, k1 -> new int[]{0, 0});
             if (v.getInvoiceType() != ProjectUtils.INVOICE_TYPE_NONE) {
-                data[1] += v.getContractAmount() - Optional.ofNullable(v.getReceiveAmount()).orElse(0);
+                data[1] += Optional.ofNullable(v.getShouldReceiveAmount()).orElse(0);
             }
         });
 
