@@ -36,4 +36,7 @@ public class LocalStorageQueryCriteria {
 
     @Query(type = Query.Type.RIGHT_LIKE)
     private String name;
+
+    @Query(type = Query.Type.LEFT_LIKE, propName = "name")
+    private String name1;
 }

@@ -107,19 +107,20 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
     @Override
     public void download(List<SysProjectGuaranteeDto> all, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
+        Map<Long, SysProjectPersonDto> personDtoMap = sysProjectPersonService.getIdToPersonMap();
         for (SysProjectGuaranteeDto sysProjectGuarantee : all) {
             Map<String, Object> map = new LinkedHashMap<>();
-            map.put("担保状态 0-担保中,1-担保逾期,2-担保完成", sysProjectGuarantee.getStatus());
-            map.put("项目类型 0-检测，1-监理，2-设计", sysProjectGuarantee.getProjectType());
+            map.put("担保状态", ProjectUtils.PROJECT_GUARANTEE_STATUS[sysProjectGuarantee.getStatus()]);
+            map.put("项目类型", ProjectUtils.PROJECT_TYPE_NAMES[sysProjectGuarantee.getProjectType()]);
             map.put("项目名", sysProjectGuarantee.getProjectName());
             map.put("甲方名称", sysProjectGuarantee.getPartyA());
-            map.put("甲方联系人", sysProjectGuarantee.getPartyAPerson());
-            map.put("担保金额", sysProjectGuarantee.getGuaranteeAmount());
+            map.put("甲方联系人", personDtoMap.getOrDefault(sysProjectGuarantee.getPartyAPerson(), new SysProjectPersonDto()).getName());
+            map.put("担保金额", ProjectUtils.dbPriceToRealPrice(sysProjectGuarantee.getGuaranteeAmount()));
             map.put("担保结束时间", sysProjectGuarantee.getGuaranteeTime());
-            map.put("担保人员", sysProjectGuarantee.getGuaranteePerson());
+            map.put("担保人员", personDtoMap.getOrDefault(sysProjectGuarantee.getGuaranteePerson(), new SysProjectPersonDto()).getName());
             map.put("备注", sysProjectGuarantee.getRemark());
-            map.put("记录创建的时间", sysProjectGuarantee.getCreateTime());
-            map.put("记录修改的时间", sysProjectGuarantee.getUpdateTime());
+            map.put("创建时间", sysProjectGuarantee.getCreateTime());
+            map.put("修改时间", sysProjectGuarantee.getUpdateTime());
             list.add(map);
         }
         FileUtil.downloadExcel(list, response);

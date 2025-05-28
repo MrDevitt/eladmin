@@ -35,6 +35,9 @@ public class SysProjectDetailQueryCriteria {
     @Query(type = Query.Type.IN, propName = "id")
     private List<Long> ids;
 
+    @Query(type = Query.Type.NOT_IN, propName = "id")
+    private List<Long> idsNotIn;
+
     @Query(type = Query.Type.BETWEEN)
     private List<Timestamp> contractTime;
 
@@ -72,4 +75,7 @@ public class SysProjectDetailQueryCriteria {
     private String partyB;
 
     private List<Timestamp> receiveTime;
+
+    //0-无附件，1-有合同，2-有明细表
+    private List<Integer> attachmentStatus;
 }

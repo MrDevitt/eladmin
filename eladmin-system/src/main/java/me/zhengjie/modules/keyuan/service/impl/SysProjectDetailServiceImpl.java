@@ -31,6 +31,8 @@ import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectDetailMapper;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
+import me.zhengjie.service.LocalStorageService;
+import me.zhengjie.service.dto.LocalStorageQueryCriteria;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
@@ -71,6 +73,8 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
 
     private final SysProjectPersonService projectPersonService;
 
+    private final LocalStorageService localStorageService;
+
     private Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = null;
 
 
@@ -96,12 +100,40 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
     }
 
     private void updateQueryCriteria(SysProjectDetailQueryCriteria criteria) {
-        if (CollectionUtils.isEmpty(criteria.getReceiveTime())) {
-            return;
+        if (CollectionUtils.isNotEmpty(criteria.getReceiveTime())) {
+            SysProjectReceiveQueryCriteria receiveQueryCriteria = new SysProjectReceiveQueryCriteria();
+            receiveQueryCriteria.setReceiveTime(criteria.getReceiveTime());
+            criteria.setIds(sysProjectReceiveService.queryAll(receiveQueryCriteria).stream().map(SysProjectReceiveDto::getProjectId).distinct().collect(Collectors.toList()));
         }
-        SysProjectReceiveQueryCriteria receiveQueryCriteria = new SysProjectReceiveQueryCriteria();
-        receiveQueryCriteria.setReceiveTime(criteria.getReceiveTime());
-        criteria.setIds(sysProjectReceiveService.queryAll(receiveQueryCriteria).stream().map(SysProjectReceiveDto::getProjectId).distinct().collect(Collectors.toList()));
+        if (CollectionUtils.isNotEmpty(criteria.getAttachmentStatus())) {
+            LocalStorageQueryCriteria localStorageQueryCriteria = new LocalStorageQueryCriteria();
+            localStorageQueryCriteria.setName1("_明细表");
+            List<Long> detailIdList = localStorageService.queryAll(localStorageQueryCriteria)
+                    .stream().map(e -> {
+                        String[] strs = e.getName().split("_");
+                        return Long.parseLong(strs[0]);
+                    }).collect(Collectors.toList());
+            localStorageQueryCriteria.setName1("_合同");
+            List<Long> contractIdList = localStorageService.queryAll(localStorageQueryCriteria)
+                    .stream().map(e -> {
+                        String[] strs = e.getName().split("_");
+                        return Long.parseLong(strs[0]);
+                    }).collect(Collectors.toList());
+            Set<Long> ids = new HashSet<>();
+            if (criteria.getAttachmentStatus().contains(0)) {
+                ids.addAll(detailIdList);
+                ids.addAll(contractIdList);
+                criteria.setIdsNotIn(new ArrayList<>(ids));
+            } else {
+                if (criteria.getAttachmentStatus().contains(1)) {
+                    ids.addAll(contractIdList);
+                }
+                if (criteria.getAttachmentStatus().contains(2)) {
+                    ids.addAll(detailIdList);
+                }
+                criteria.setIds(new ArrayList<>(ids));
+            }
+        }
     }
 
     @Override
