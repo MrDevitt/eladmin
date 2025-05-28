@@ -119,19 +119,19 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
                         String[] strs = e.getName().split("_");
                         return Long.parseLong(strs[0]);
                     }).collect(Collectors.toList());
-            Set<Long> ids = new HashSet<>();
             if (criteria.getAttachmentStatus().contains(0)) {
+                Set<Long> ids = new HashSet<>();
                 ids.addAll(detailIdList);
                 ids.addAll(contractIdList);
                 criteria.setIdsNotIn(new ArrayList<>(ids));
             } else {
-                if (criteria.getAttachmentStatus().contains(1)) {
-                    ids.addAll(contractIdList);
+                if (criteria.getAttachmentStatus().contains(1) && criteria.getAttachmentStatus().contains(2)) {
+                    criteria.setIds(new ArrayList<>(CollectionUtils.intersection(detailIdList, contractIdList)));
+                } else if (criteria.getAttachmentStatus().contains(1)) {
+                    criteria.setIds(contractIdList);
+                } else if (criteria.getAttachmentStatus().contains(2)) {
+                    criteria.setIds(detailIdList);
                 }
-                if (criteria.getAttachmentStatus().contains(2)) {
-                    ids.addAll(detailIdList);
-                }
-                criteria.setIds(new ArrayList<>(ids));
             }
         }
     }

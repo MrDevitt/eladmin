@@ -82,7 +82,7 @@ public class SysProjectDetailController {
     @PutMapping
     @Log("修改项目明细")
     @ApiOperation("修改项目明细")
-    @PreAuthorize("@el.check('sysProjectDetail:edit')")
+    @PreAuthorize("@el.check('sysProjectDetail:edit','sysProjectDetail:editProgress')")
     public ResponseEntity<Object> updateSysProjectDetail(@Validated @RequestBody SysProjectDetail resources) {
         sysProjectDetailService.update(resources);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
