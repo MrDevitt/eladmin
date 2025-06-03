@@ -68,7 +68,7 @@ public class LocalStorageController {
     @PreAuthorize("@el.check('storage:list')")
     public ResponseEntity<PageResult<LocalStorageDto>> queryFile(Long projectId, @RequestParam(required = false) String prefix, Pageable pageable) {
         LocalStorageQueryCriteria criteria = new LocalStorageQueryCriteria();
-        String name = projectId + "_";
+        String name = projectId + "\\_";//like匹配中_代表任意单字符，匹配_需要用\转义
         if (prefix != null) {
             name = prefix + name;
         }
