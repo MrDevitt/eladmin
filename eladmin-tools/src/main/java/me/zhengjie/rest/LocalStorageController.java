@@ -26,6 +26,7 @@ import me.zhengjie.service.dto.LocalStorageDto;
 import me.zhengjie.service.dto.LocalStorageQueryCriteria;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -95,10 +96,15 @@ public class LocalStorageController {
     @ApiOperation("上传项目附件")
     @PreAuthorize("@el.check('storage:add')")
     public ResponseEntity<Object> createAttachmentFile(@RequestParam String name, @RequestParam("file") MultipartFile file) {
+        LocalStorageQueryCriteria criteria = new LocalStorageQueryCriteria();
+        criteria.setName2(name);
+        if (CollectionUtils.isNotEmpty(localStorageService.queryAll(criteria))) {
+            throw new BadRequestException("上传失败，文件名重复！");
+        }
         String suffix = FileUtil.getExtensionName(file.getOriginalFilename());
         String type = FileUtil.getFileType(suffix);
         if (!FileUtil.IMAGE.equals(type) && !"pdf".equals(suffix)) {
-            throw new BadRequestException("上传失败，不支持的文件格式");
+            throw new BadRequestException("上传失败，不支持的文件格式！");
         }
         localStorageService.create(name, file);
         return new ResponseEntity<>(HttpStatus.CREATED);
