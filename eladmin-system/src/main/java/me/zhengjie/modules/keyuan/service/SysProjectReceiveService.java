@@ -50,6 +50,8 @@ public interface SysProjectReceiveService {
      */
     List<SysProjectReceiveDto> queryAll(SysProjectReceiveQueryCriteria criteria);
 
+    List<SysProjectReceiveDto> queryInvoicedNotReceive();
+
     /**
      * 根据ID查询
      *

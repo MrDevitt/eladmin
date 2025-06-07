@@ -18,6 +18,9 @@ package me.zhengjie.modules.keyuan.repository;
 import me.zhengjie.modules.keyuan.domain.SysProjectReceive;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.List;
 
 /**
  * @author MrDevitt
@@ -25,4 +28,12 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * @date 2024-07-03
  **/
 public interface SysProjectReceiveRepository extends JpaRepository<SysProjectReceive, Long>, JpaSpecificationExecutor<SysProjectReceive> {
+    @Query(value = "SELECT *\n" +
+            "FROM sys_project_receive\n" +
+            "WHERE project_id IN (\n" +
+            "    SELECT project_id\n" +
+            "    FROM sys_project_receive\n" +
+            "    GROUP BY project_id\n" +
+            "    HAVING SUM(invoice_amount) > SUM(receive_amount));", nativeQuery = true)
+    List<SysProjectReceive> findInvoicedNotReceive();
 }

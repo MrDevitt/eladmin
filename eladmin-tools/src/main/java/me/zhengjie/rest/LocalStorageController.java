@@ -65,7 +65,8 @@ public class LocalStorageController {
     }
 
     @GetMapping("/projectAttachment")
-    @ApiOperation("查询文件")
+    @Log("查询项目附件")
+    @ApiOperation("查询项目附件")
     @PreAuthorize("@el.check('storage:list')")
     public ResponseEntity<PageResult<LocalStorageDto>> queryFile(Long projectId, @RequestParam(required = false) String prefix, Pageable pageable) {
         LocalStorageQueryCriteria criteria = new LocalStorageQueryCriteria();
@@ -92,6 +93,7 @@ public class LocalStorageController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @Log("上传项目附件")
     @PostMapping("/projectAttachment")
     @ApiOperation("上传项目附件")
     @PreAuthorize("@el.check('storage:add')")

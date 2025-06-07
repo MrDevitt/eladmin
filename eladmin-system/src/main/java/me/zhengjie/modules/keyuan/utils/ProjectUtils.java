@@ -74,7 +74,7 @@ public class ProjectUtils {
         examMap.put("日喀则", Pair.of(List.of("5401020103", "5401020106", "1133010101"), 122574775L));
         examMap.put("拉萨", Pair.of(List.of("5401020101", "5401020108", "1133010102"), 13472853L));
         examMap.put("阿里", Pair.of(List.of("5401020102", "5401020107", "1133010103"), 7997788L));
-        examMap.put("那曲", Pair.of(List.of("5401020110", "5401020111", "1133010113"), -2327724L));
+        examMap.put("那曲", Pair.of(List.of("5401020110", "5401020111", "1133010113", "1133010114"), -2327724L));
         examMap.forEach((k, v) -> {
             ProjectDepartment department = new ProjectDepartment(k + "检测");
             department.setAccountNumberList(v.getLeft());

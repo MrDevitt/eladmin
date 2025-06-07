@@ -3,6 +3,7 @@ package me.zhengjie.modules.keyuan.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoiceTableRow;
+import me.zhengjie.modules.keyuan.domain.statistics.InvoicedNotReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.domain.statistics.SysShouldReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.AccountBalanceData;
@@ -21,6 +22,7 @@ import me.zhengjie.modules.keyuan.utils.CalendarUtils;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -34,6 +36,8 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static me.zhengjie.modules.keyuan.domain.statistics.InvoicedNotReceiveData.Row.COMPARATOR;
 
 @Slf4j
 @Service
@@ -453,4 +457,27 @@ public class SysProjectStatisticsService {
         return invoiceTableRowList;
     }
 
+    public InvoicedNotReceiveData getInvoicedNotReceiveData(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
+        InvoicedNotReceiveData res = new InvoicedNotReceiveData();
+        List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryInvoicedNotReceive();
+        Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailService.getSysProjectDetailDtoMap();
+        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
+        Map<String, Integer> personMap = new HashMap<>();
+        for (SysProjectReceiveDto receiveDto : receiveDtoList) {
+            int amount = receiveDto.getInvoiceAmount() - receiveDto.getReceiveAmount();
+            long projectId = receiveDto.getProjectId();
+            String name = sysProjectPersonDtoMap.get(sysProjectDetailDtoMap.get(projectId).getSalesPerson()).getName();
+            personMap.put(name, personMap.getOrDefault(name, 0) + amount);
+        }
+        List<InvoicedNotReceiveData.Row> rows = new ArrayList<>();
+        personMap.forEach((k, v) -> {
+            InvoicedNotReceiveData.Row row = new InvoicedNotReceiveData.Row();
+            row.setName(k);
+            row.setAmount(ProjectUtils.dbPriceToRealPriceString(v));
+            rows.add(row);
+        });
+        rows.sort(COMPARATOR.reversed());
+        res.setRows(rows);
+        return res;
+    }
 }

@@ -106,6 +106,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             criteria.setIds(sysProjectReceiveService.queryAll(receiveQueryCriteria).stream().map(SysProjectReceiveDto::getProjectId).distinct().collect(Collectors.toList()));
         }
         if (CollectionUtils.isNotEmpty(criteria.getAttachmentStatus())) {
+            List<Integer> attachmentStatus = criteria.getAttachmentStatus();
             LocalStorageQueryCriteria localStorageQueryCriteria = new LocalStorageQueryCriteria();
             localStorageQueryCriteria.setName1("_明细表");
             List<Long> detailIdList = localStorageService.queryAll(localStorageQueryCriteria)
@@ -119,19 +120,20 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
                         String[] strs = e.getName().split("_");
                         return Long.parseLong(strs[0]);
                     }).collect(Collectors.toList());
-            if (criteria.getAttachmentStatus().contains(0)) {
-                Set<Long> ids = new HashSet<>();
-                ids.addAll(detailIdList);
-                ids.addAll(contractIdList);
-                criteria.setIdsNotIn(new ArrayList<>(ids));
-            } else {
-                if (criteria.getAttachmentStatus().contains(1) && criteria.getAttachmentStatus().contains(2)) {
-                    criteria.setIds(new ArrayList<>(CollectionUtils.intersection(detailIdList, contractIdList)));
-                } else if (criteria.getAttachmentStatus().contains(1)) {
-                    criteria.setIds(contractIdList);
-                } else if (criteria.getAttachmentStatus().contains(2)) {
-                    criteria.setIds(detailIdList);
-                }
+            Set<Long> notInIdSet = new HashSet<>();
+            if (attachmentStatus.contains(0)) {
+                notInIdSet.addAll(contractIdList);
+            }
+            if (attachmentStatus.contains(1)) {
+                notInIdSet.addAll(detailIdList);
+            }
+            criteria.setIdsNotIn(new ArrayList<>(notInIdSet));
+            if (attachmentStatus.contains(2) && attachmentStatus.contains(3)) {
+                criteria.setIds(new ArrayList<>(CollectionUtils.intersection(detailIdList, contractIdList)));
+            } else if (attachmentStatus.contains(2)) {
+                criteria.setIds(contractIdList);
+            } else if (attachmentStatus.contains(3)) {
+                criteria.setIds(detailIdList);
             }
         }
     }

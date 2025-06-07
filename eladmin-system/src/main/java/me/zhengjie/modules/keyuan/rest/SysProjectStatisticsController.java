@@ -6,11 +6,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoiceTableRow;
+import me.zhengjie.modules.keyuan.domain.statistics.InvoicedNotReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.domain.statistics.SysShouldReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceData;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.impl.SysProjectStatisticsService;
 import me.zhengjie.modules.keyuan.utils.CalendarUtils;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -72,4 +75,11 @@ public class SysProjectStatisticsController {
         return new ResponseEntity<>(sysProjectStatisticsService.getBalanceData(endTime), HttpStatus.OK);
     }
 
+    @GetMapping("/invoicedNotReceive")
+    @Log("查询已开票未收款数据")
+    @ApiOperation("查询已开票未收款数据")
+    @PreAuthorize("@el.check('sysProjectStatistics:list')")
+    public ResponseEntity<InvoicedNotReceiveData> queryInvoicedNotReceiveData(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
+        return new ResponseEntity<>(sysProjectStatisticsService.getInvoicedNotReceiveData(criteria, pageable), HttpStatus.OK);
+    }
 }

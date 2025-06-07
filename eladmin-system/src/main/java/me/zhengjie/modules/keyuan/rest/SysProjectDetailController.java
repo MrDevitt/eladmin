@@ -15,14 +15,18 @@
  */
 package me.zhengjie.modules.keyuan.rest;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
+import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.utils.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -39,6 +43,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author MrDevitt
@@ -52,6 +60,9 @@ import java.io.IOException;
 public class SysProjectDetailController {
 
     private final SysProjectDetailService sysProjectDetailService;
+
+    private final SysProjectReceiveService sysProjectReceiveService;
+
 
     @Log("导出数据")
     @ApiOperation("导出数据")
@@ -67,6 +78,29 @@ public class SysProjectDetailController {
     @PreAuthorize("@el.check('sysProjectDetail:list')")
     public ResponseEntity<PageResult<SysProjectDetailDto>> querySysProjectDetail(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
         PageResult<SysProjectDetailDto> res = sysProjectDetailService.queryAll(criteria, pageable);
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @GetMapping("/invoicedNotReceive")
+    @Log("查询开票未收款项目明细")
+    @ApiOperation("查询开票未收款项目明细")
+    @PreAuthorize("@el.check('sysProjectDetail:list')")
+    public ResponseEntity<PageResult<JSONObject>> queryInvoicedNotReceiveDetail(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
+        Map<Long, Integer> invoicedNotReceiveMap = new HashMap<>();
+        List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryInvoicedNotReceive();
+        for (SysProjectReceiveDto receiveDto : receiveDtoList) {
+            int amount = receiveDto.getInvoiceAmount() - receiveDto.getReceiveAmount();
+            long projectId = receiveDto.getProjectId();
+            invoicedNotReceiveMap.put(projectId, invoicedNotReceiveMap.getOrDefault(projectId, 0) + amount);
+        }
+        List<Long> ids = receiveDtoList.stream().map(SysProjectReceiveDto::getProjectId).collect(Collectors.toList());
+        criteria.setIds(ids);
+        PageResult<SysProjectDetailDto> detailDtoPageResult = sysProjectDetailService.queryAll(criteria, pageable);
+        PageResult<JSONObject> res = detailDtoPageResult.map(e -> {
+            JSONObject o = JSON.parseObject(JSON.toJSONString(e));
+            o.put("invoiceNotReceiveAmount", invoicedNotReceiveMap.get(e.getId()));
+            return o;
+        });
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 

@@ -72,6 +72,11 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     }
 
     @Override
+    public List<SysProjectReceiveDto> queryInvoicedNotReceive() {
+        return sysProjectReceiveMapper.toDto(sysProjectReceiveRepository.findInvoicedNotReceive());
+    }
+
+    @Override
     @Transactional
     public SysProjectReceiveDto findById(Long id) {
         SysProjectReceive sysProjectReceive = sysProjectReceiveRepository.findById(id).orElseGet(SysProjectReceive::new);

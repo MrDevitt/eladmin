@@ -76,6 +76,8 @@ public class SysProjectDetailQueryCriteria {
 
     private List<Timestamp> receiveTime;
 
-    //0-无附件，1-有合同，2-有明细表
+    //0-无合同，1-无明细表，2-有合同，3-有明细表
     private List<Integer> attachmentStatus;
+
+    private boolean queryInvoicedNotReceiveData = false;
 }
