@@ -32,14 +32,17 @@
     </logger>
 
     <logger name="jdbc.connection" level="OFF" additivity="false">
-        <appender-ref ref="console" />
+        <appender-ref ref="console"/>
     </logger>
 
     <logger name="jdbc.sqltiming" level="OFF" additivity="false">
-        <appender-ref ref="console" />
+        <appender-ref ref="console"/>
     </logger>
 
     <logger name="jdbc.audit" level="OFF" additivity="false">
-        <appender-ref ref="console" />
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="org.apache.poi.xssf.streaming.SXSSFCreationHelper" level="OFF" additivity="false">
+        <appender-ref ref="console"/>
     </logger>
 </configuration>

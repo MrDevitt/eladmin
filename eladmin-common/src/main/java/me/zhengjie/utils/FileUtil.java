@@ -25,10 +25,16 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -229,6 +235,23 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
         file.deleteOnExit();
         writer.flush(out, true);
         //此处记得关闭输出Servlet流
+        IoUtil.close(out);
+    }
+
+    public static void downloadExcel(Map<String, List<Map<String, Object>>> map, HttpServletResponse response) throws IOException {
+        String tempPath = SYS_TEM_DIR + IdUtil.fastSimpleUUID() + ".xlsx";
+        File file = new File(tempPath);
+        BigExcelWriter writer = ExcelUtil.getBigWriter(file);
+        map.forEach((k, v) -> {
+            writer.setSheet(k);
+            writer.write(v, true);
+            writer.autoSizeColumnAll();
+        });
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ServletOutputStream out = response.getOutputStream();
+        file.deleteOnExit();
+        writer.flush(out, true);
         IoUtil.close(out);
     }
 

@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 @Slf4j
@@ -73,6 +75,15 @@ public class SysProjectStatisticsController {
             endTime = CalendarUtils.getEndOfMonth(month).getTimeInMillis();
         }
         return new ResponseEntity<>(sysProjectStatisticsService.getBalanceData(endTime), HttpStatus.OK);
+    }
+
+
+    @Log("导出余额表数据")
+    @ApiOperation("导出余额表数据")
+    @GetMapping(value = "/balance/download")
+    @PreAuthorize("@el.check()")
+    public void exportSysProjectBalance(HttpServletResponse response, @RequestParam int month) throws IOException {
+        sysProjectStatisticsService.downloadSysProjectBalance(month, response);
     }
 
     @GetMapping("/invoicedNotReceive")

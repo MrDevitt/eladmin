@@ -20,16 +20,20 @@ import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.utils.CalendarUtils;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
+import me.zhengjie.utils.FileUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -480,4 +484,88 @@ public class SysProjectStatisticsService {
         res.setRows(rows);
         return res;
     }
+
+    public void downloadSysProjectBalance(int month, HttpServletResponse response) throws IOException {
+        long timeInMillis = CalendarUtils.getEndOfMonth(month).getTimeInMillis();
+        BalanceData balanceData = getBalanceData(timeInMillis);
+        Map<String, List<Map<String, Object>>> excelMap = new LinkedHashMap<>();
+        excelMap.put("部门余额统计", buildExcelList(balanceData.getDepartmentRowsWithChildren(), "部门名称"));
+        excelMap.put("业务人余额统计", buildExcelList(balanceData.getPersonRows(), "业务人"));
+        excelMap.put("收款明细", buildDetailExcelMap(timeInMillis));
+        FileUtil.downloadExcel(excelMap, response);
+    }
+
+    private List<Map<String, Object>> buildDetailExcelMap(long timeInMillis) {
+        List<Map<String, Object>> res = new ArrayList<>();
+        SysProjectReceiveQueryCriteria receiveQueryCriteria = new SysProjectReceiveQueryCriteria();
+        receiveQueryCriteria.setReceiveTime(List.of(
+                new Timestamp(CalendarUtils.getBeginningOfMonth(timeInMillis).getTimeInMillis()),
+                new Timestamp(timeInMillis)));
+        List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryAll(receiveQueryCriteria);
+        Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailService.getSysProjectDetailDtoMap();
+        Map<Long, List<SysProjectReceiveDto>> receiveDtoMapByProjectId = receiveDtoList.stream().collect(Collectors.groupingBy(SysProjectReceiveDto::getProjectId));
+        Map<Long, SysProjectPersonDto> personDtoMap = sysProjectPersonService.getIdToPersonMap();
+        receiveDtoMapByProjectId.forEach((k, v) -> {
+            SysProjectDetailDto projectDetailDto = sysProjectDetailDtoMap.get(k);
+            Map<String, Object> o = new LinkedHashMap<>();
+            o.put("项目类型", ProjectUtils.projectTypeToName(projectDetailDto.getProjectType()));
+            o.put("项目名", projectDetailDto.getProjectName());
+            o.put("项目编号", projectDetailDto.getContractNumber());
+            o.put("项目区域", projectDetailDto.getProjectRegion());
+            o.put("业务人", personDtoMap.get(projectDetailDto.getSalesPerson()).getName());
+            o.put("合同金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getContractAmount()));
+            long receiveAmount = 0, invoiceAmount = 0;
+            for (SysProjectReceiveDto receiveDto : v) {
+                invoiceAmount += receiveDto.getInvoiceAmount();
+                receiveAmount += receiveDto.getReceiveAmount();
+            }
+            o.put("开票金额", ProjectUtils.dbPriceToRealPrice(invoiceAmount));
+            o.put("已收款总金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getReceiveAmount()));
+            o.put("项目进度", projectDetailDto.getProjectProgress() + "%");
+            o.put("本月收款金额", ProjectUtils.dbPriceToRealPrice(receiveAmount));
+            o.put("业务中心应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getSalesPercent() * receiveAmount / 100));
+            if (projectDetailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_SUPERVISE) {
+                o.put("技术中心应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getTechnicalPercent() * receiveAmount / 100 * 4 / 30));
+                o.put("技术地区应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getTechnicalPercent() * receiveAmount / 100 * 26 / 30));
+            } else {
+                o.put("技术中心应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getTechnicalPercent() * receiveAmount / 100));
+                o.put("技术地区应计金额", 0);
+            }
+            o.put("管理中心应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getManagementPercent() * receiveAmount / 100));
+            o.put("总裁办应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getPresidentPercent() * receiveAmount / 100));
+            o.put("备注", projectDetailDto.getRemark());
+            res.add(o);
+        });
+        return res;
+    }
+
+    private List<Map<String, Object>> buildExcelList(List<BalanceTableRow> balanceTableRowList, String firstColumnName) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (BalanceTableRow row : balanceTableRowList) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put(firstColumnName, row.getName());
+            map.put("上年结转", row.getInitialBalance());
+            map.put("上月累计支出", row.getExpenseLast());
+            map.put("本月支出", row.getExpenseThisMonth());
+            map.put("本年累计支出", row.getExpenseThisYear());
+            map.put("上月检测累计收入", row.getExamLast());
+            map.put("本月检测收入", row.getExamThisMonth());
+            map.put("本年检测累计收入", row.getExamThisYear());
+            map.put("上月监理累计收入", row.getSuperviseLast());
+            map.put("本月监理收入", row.getSuperviseThisMonth());
+            map.put("本年监理累计收入", row.getSuperviseThisYear());
+            map.put("上月设计累计收入", row.getDesignLast());
+            map.put("本月设计收入", row.getDesignThisMonth());
+            map.put("本年设计累计收入", row.getDesignThisYear());
+            map.put("上月其他累计收入", row.getOtherLast());
+            map.put("本月其他收入", row.getOtherThisMonth());
+            map.put("本年其他累计收入", row.getOtherThisYear());
+            map.put("上月累计余额", row.getSumLast());
+            map.put("本月余额", row.getSumThisMonth());
+            map.put("本年累计余额", row.getSumThisYear());
+            list.add(map);
+        }
+        return list;
+    }
+
 }
