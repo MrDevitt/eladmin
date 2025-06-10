@@ -81,7 +81,7 @@ public class SysProjectStatisticsController {
     @Log("导出余额表数据")
     @ApiOperation("导出余额表数据")
     @GetMapping(value = "/balance/download")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@el.check('sysProjectStatistics:list')")
     public void exportSysProjectBalance(HttpServletResponse response, @RequestParam int month) throws IOException {
         sysProjectStatisticsService.downloadSysProjectBalance(month, response);
     }

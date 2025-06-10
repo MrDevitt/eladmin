@@ -248,6 +248,7 @@ public class SysProjectStatisticsService {
         receiveTimeList.add(new Timestamp(CalendarUtils.getBeginningOfYear().getTimeInMillis()));
         receiveTimeList.add(new Timestamp(endTime));
         criteria.setReceiveTime(receiveTimeList);
+        criteria.setReceiveAmount(0);
         List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(criteria);
         Map<Long, SysProjectDetailDto> detailMap = new HashMap<>();
         balanceData.setDepartmentRows(buildDepartmentRows(sysProjectReceiveDtoList, detailMap, endTime));
@@ -501,6 +502,7 @@ public class SysProjectStatisticsService {
         receiveQueryCriteria.setReceiveTime(List.of(
                 new Timestamp(CalendarUtils.getBeginningOfMonth(timeInMillis).getTimeInMillis()),
                 new Timestamp(timeInMillis)));
+        receiveQueryCriteria.setReceiveAmount(0);
         List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryAll(receiveQueryCriteria);
         Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailService.getSysProjectDetailDtoMap();
         Map<Long, List<SysProjectReceiveDto>> receiveDtoMapByProjectId = receiveDtoList.stream().collect(Collectors.groupingBy(SysProjectReceiveDto::getProjectId));
@@ -519,8 +521,8 @@ public class SysProjectStatisticsService {
                 invoiceAmount += receiveDto.getInvoiceAmount();
                 receiveAmount += receiveDto.getReceiveAmount();
             }
-            o.put("开票金额", ProjectUtils.dbPriceToRealPrice(invoiceAmount));
-            o.put("已收款总金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getReceiveAmount()));
+            o.put("开票总金额", ProjectUtils.dbPriceToRealPrice(invoiceAmount));
+            o.put("收款总金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getReceiveAmount()));
             o.put("项目进度", projectDetailDto.getProjectProgress() + "%");
             o.put("本月收款金额", ProjectUtils.dbPriceToRealPrice(receiveAmount));
             o.put("业务中心应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getSalesPercent() * receiveAmount / 100));

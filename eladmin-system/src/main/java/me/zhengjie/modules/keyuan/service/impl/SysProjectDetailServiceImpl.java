@@ -103,6 +103,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         if (CollectionUtils.isNotEmpty(criteria.getReceiveTime())) {
             SysProjectReceiveQueryCriteria receiveQueryCriteria = new SysProjectReceiveQueryCriteria();
             receiveQueryCriteria.setReceiveTime(criteria.getReceiveTime());
+            receiveQueryCriteria.setReceiveAmount(0);
             criteria.setIds(sysProjectReceiveService.queryAll(receiveQueryCriteria).stream().map(SysProjectReceiveDto::getProjectId).distinct().collect(Collectors.toList()));
         }
         if (CollectionUtils.isNotEmpty(criteria.getAttachmentStatus())) {

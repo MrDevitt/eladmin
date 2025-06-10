@@ -39,4 +39,7 @@ public class SysProjectReceiveQueryCriteria {
 
     @Query(type = Query.Type.GREATER_THAN_NQ)
     private Integer invoiceAmount;
+
+    @Query(type = Query.Type.GREATER_THAN_NQ)
+    private Integer receiveAmount;
 }
