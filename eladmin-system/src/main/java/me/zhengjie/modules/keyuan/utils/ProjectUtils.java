@@ -46,19 +46,19 @@ public class ProjectUtils {
 
         ProjectDepartment management = new ProjectDepartment(PROJECT_DEPARTMENT_MANAGEMENT);
         management.setAccountNumberList(List.of("540103", "113303"));
-        management.setInitialBalance(-373289417L);
+        management.setInitialBalance(-375319017L);
         management.setPercentageGetter(SysProjectDetailDto::getManagementPercent);
         PROJECT_DEPARTMENT_LIST.add(management);
 
         ProjectDepartment president = new ProjectDepartment(PROJECT_DEPARTMENT_PRESIDENT);
         president.setAccountNumberList(List.of("113304", "540104"));
-        president.setInitialBalance(358220754L);
+        president.setInitialBalance(363120754L);
         president.setPercentageGetter(SysProjectDetailDto::getPresidentPercent);
         PROJECT_DEPARTMENT_LIST.add(president);
 
         ProjectDepartment tech = new ProjectDepartment(PROJECT_DEPARTMENT_TECH);
         tech.setAccountNumberList(List.of("540102", "113301"));
-        tech.setInitialBalance(31411600L);
+        tech.setInitialBalance(32665835L);
         tech.setPercentageGetter(SysProjectDetailDto::getTechnicalPercent);
         tech.setChildren(new ArrayList<>());
         PROJECT_DEPARTMENT_LIST.add(tech);
