@@ -80,4 +80,6 @@ public class SysProjectDetailQueryCriteria {
     private List<Integer> attachmentStatus;
 
     private boolean queryInvoicedNotReceiveData = false;
+
+    private String idsStr;
 }

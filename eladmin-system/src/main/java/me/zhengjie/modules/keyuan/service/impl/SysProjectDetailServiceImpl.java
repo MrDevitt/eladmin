@@ -39,6 +39,7 @@ import me.zhengjie.utils.PageUtil;
 import me.zhengjie.utils.QueryHelp;
 import me.zhengjie.utils.ValidationUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -137,6 +138,14 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
                 criteria.setIds(detailIdList);
             }
         }
+        if (StringUtils.isNotEmpty(criteria.getIdsStr())) {
+            String[] ids = criteria.getIdsStr().split(",");
+            List<Long> idsList = new ArrayList<>();
+            for (String id : ids) {
+                idsList.add(Long.parseLong(id));
+            }
+            criteria.setIds(idsList);
+        }
     }
 
     @Override
@@ -198,11 +207,12 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             map.put("乙方名称", sysProjectDetail.getPartyB());
             map.put("合同编号", sysProjectDetail.getContractNumber());
             map.put("签订时间", sysProjectDetail.getContractTime());
-            map.put("合同金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getContractAmount()));
             map.put("合同付款方式", ProjectUtils.PROJECT_PAY_WAYS[sysProjectDetail.getContractPayWay()]);
+            map.put("合同金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getContractAmount()));
+            map.put("已收款", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getReceiveAmount()));
+            map.put("未收款", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getContractAmount()) - ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getReceiveAmount()));
             map.put("项目进度", sysProjectDetail.getProjectProgress());
-            map.put("收款金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getReceiveAmount()));
-            map.put("应收款金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getShouldReceiveAmount()));
+            map.put("应收款", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getShouldReceiveAmount()));
             map.put("业务人员", personDtoMap.get(sysProjectDetail.getSalesPerson()).getName());
             map.put("甲方负责人", personDtoMap.getOrDefault(sysProjectDetail.getPartyAPerson(), new SysProjectPersonDto()).getName());
             map.put("发票类型", ProjectUtils.PROJECT_INVOICE_NAMES[sysProjectDetail.getInvoiceType()]);

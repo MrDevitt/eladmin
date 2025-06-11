@@ -26,15 +26,27 @@ import me.zhengjie.modules.quartz.repository.QuartzLogRepository;
 import me.zhengjie.modules.quartz.service.QuartzJobService;
 import me.zhengjie.modules.quartz.service.dto.JobQueryCriteria;
 import me.zhengjie.modules.quartz.utils.QuartzManage;
-import me.zhengjie.utils.*;
+import me.zhengjie.utils.FileUtil;
+import me.zhengjie.utils.PageResult;
+import me.zhengjie.utils.PageUtil;
+import me.zhengjie.utils.QueryHelp;
+import me.zhengjie.utils.RedisUtils;
+import me.zhengjie.utils.StringUtils;
+import me.zhengjie.utils.ValidationUtil;
 import org.quartz.CronExpression;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Zheng Jie
@@ -186,6 +198,7 @@ public class QuartzJobServiceImpl implements QuartzJobService {
             map.put("执行方法", quartzLog.getMethodName());
             map.put("参数", quartzLog.getParams());
             map.put("表达式", quartzLog.getCronExpression());
+            map.put("结果", quartzLog.getResult());
             map.put("异常详情", quartzLog.getExceptionDetail());
             map.put("耗时/毫秒", quartzLog.getTime());
             map.put("状态", quartzLog.getIsSuccess() ? "成功" : "失败");

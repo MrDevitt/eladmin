@@ -35,8 +35,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.quartz.QuartzJobBean;
-import java.util.*;
-import java.util.concurrent.*;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * 参考人人开源，<a href="https://gitee.com/renrenio/renren-security">...</a>
@@ -73,17 +77,18 @@ public class ExecutionJob extends QuartzJobBean {
             // 执行任务
             QuartzRunnable task = new QuartzRunnable(quartzJob.getBeanName(), quartzJob.getMethodName(), quartzJob.getParams());
             Future<?> future = executor.submit(task);
-            future.get();
+            Object result = future.get();
+            log.setResult(String.valueOf(result));
             long times = System.currentTimeMillis() - startTime;
             log.setTime(times);
-            if(StringUtils.isNotBlank(uuid)) {
+            if (StringUtils.isNotBlank(uuid)) {
                 redisUtils.set(uuid, true);
             }
             // 任务状态
             log.setIsSuccess(true);
             logger.info("任务执行成功，任务名称：" + quartzJob.getJobName() + ", 执行时间：" + times + "毫秒");
             // 判断是否存在子任务
-            if(StringUtils.isNotBlank(quartzJob.getSubTask())){
+            if (StringUtils.isNotBlank(quartzJob.getSubTask())) {
                 String[] tasks = quartzJob.getSubTask().split("[,，]");
                 // 执行子任务
                 quartzJobService.executionSubJob(tasks);

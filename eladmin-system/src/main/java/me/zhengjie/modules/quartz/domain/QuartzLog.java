@@ -18,7 +18,13 @@ package me.zhengjie.modules.quartz.domain;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
-import javax.persistence.*;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -54,6 +60,9 @@ public class QuartzLog implements Serializable {
 
     @ApiModelProperty(value = "状态", hidden = true)
     private Boolean isSuccess;
+
+    @ApiModelProperty(value = "执行结果", hidden = true)
+    private String result;
 
     @ApiModelProperty(value = "异常详情", hidden = true)
     private String exceptionDetail;

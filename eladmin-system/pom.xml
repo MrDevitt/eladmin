@@ -110,6 +110,11 @@
             <systemPath>/Users/mrdevitt/Downloads/AsterJavaSDK/kingdee-xw-openapi-1.0.0-jar-with-dependencies.jar
             </systemPath>
         </dependency>
+        <dependency>
+            <groupId>com.belerweb</groupId>
+            <artifactId>pinyin4j</artifactId>
+            <version>2.5.0</version>
+        </dependency>
     </dependencies>
 
     <!-- 打包 -->
