@@ -98,7 +98,8 @@ public class SysProjectDetailDto implements Serializable {
     private Timestamp contractTime;
 
     /**
-     * 合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付
+     * 合同付款方式 0-签合同50，完工结清；1-一次性付清；2-签合同30进度50付30完工结清；3-按进度拨付；
+     * 4-签合同60，施工图(进度90)30，竣工验收10；5-签合同50，验收(进度80)30，审计20；6-合同签订90，基础验收10
      */
     private Integer contractPayWay;
 

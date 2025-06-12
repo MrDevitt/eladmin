@@ -86,6 +86,17 @@ public class SysProjectDetailTask {
             case 3:
                 shouldPay = contractAmount * progress / 100;
                 break;
+            case 4:
+                //noinspection DuplicateExpressions
+                shouldPay = progress < 90 ? contractAmount * 60 / 100 : progress < 100 ? contractAmount * 90 / 100 : contractAmount;
+                break;
+            case 5:
+                shouldPay = progress < 80 ? contractAmount * 50 / 100 : progress < 100 ? contractAmount * 80 / 100 : contractAmount;
+                break;
+            case 6:
+                //noinspection DuplicateExpressions
+                shouldPay = progress < 100 ? contractAmount * 90 / 100 : contractAmount;
+                break;
             default:
                 throw new RuntimeException("invalid contractPayWay, projectId=" + sysProjectDetailDto.getId());
         }
@@ -145,7 +156,9 @@ public class SysProjectDetailTask {
                 receiveErrorIds.append(detailDto.getId()).append(",");
             }
         }
-//        receiveErrorIds.deleteCharAt(receiveErrorIds.length()-1);
+        if (receiveErrorIds.length() > 0) {
+            receiveErrorIds.deleteCharAt(receiveErrorIds.length() - 1);
+        }
         result.put("收款与明细不一致项目", receiveErrorIds.toString());
         //检查收款大于合同金额
         StringBuilder contractErrorIds = new StringBuilder();
@@ -154,7 +167,9 @@ public class SysProjectDetailTask {
                 contractErrorIds.append(detailDto.getId()).append(",");
             }
         }
-//        contractErrorIds.deleteCharAt(contractErrorIds.length()-1);
+        if (contractErrorIds.length() > 0) {
+            contractErrorIds.deleteCharAt(contractErrorIds.length() - 1);
+        }
         result.put("收款大于合同金额项目", contractErrorIds);
         //检查担保
         StringBuilder guaranteeErrorIds = new StringBuilder();
@@ -167,7 +182,9 @@ public class SysProjectDetailTask {
                 guaranteeErrorIds.append(detailDto.getId()).append(",");
             }
         }
-//        guaranteeErrorIds.deleteCharAt(guaranteeErrorIds.length()-1);
+        if (guaranteeErrorIds.length() > 0) {
+            guaranteeErrorIds.deleteCharAt(guaranteeErrorIds.length() - 1);
+        }
         result.put("担保与明细重复项目", guaranteeErrorIds.toString());
         //检查业务人和项目编号匹配
         StringBuilder salesPersonErrorIds = new StringBuilder();
@@ -179,11 +196,12 @@ public class SysProjectDetailTask {
                 salesPersonErrorIds.append(detailDto.getId()).append(",");
             }
         }
-//        salesPersonErrorIds.deleteCharAt(salesPersonErrorIds.length()-1);
+        if (salesPersonErrorIds.length() > 0) {
+            salesPersonErrorIds.deleteCharAt(salesPersonErrorIds.length() - 1);
+        }
         result.put("业务人与编号不匹配项目", salesPersonErrorIds.toString());
         //检查项目名重复
         StringBuilder projectNameErrorIds = new StringBuilder();
-        Set<String> nameSet = new HashSet<>();
         Map<String, List<Long>> repeatedNameMap = new HashMap<>();
         for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
             String key = detailDto.getProjectType() + "_" + detailDto.getProjectName();
@@ -197,7 +215,9 @@ public class SysProjectDetailTask {
                 }
             }
         });
-//        projectNameErrorIds.deleteCharAt(projectNameErrorIds.length()-1);
+        if (projectNameErrorIds.length() > 0) {
+            projectNameErrorIds.deleteCharAt(projectNameErrorIds.length() - 1);
+        }
         result.put("项目名重复项目", projectNameErrorIds.toString());
         return JSON.toJSONString(result);
     }

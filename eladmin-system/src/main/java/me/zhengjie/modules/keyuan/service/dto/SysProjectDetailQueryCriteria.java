@@ -74,6 +74,9 @@ public class SysProjectDetailQueryCriteria {
     @Query
     private String partyB;
 
+    @Query(type = Query.Type.IN)
+    private List<Integer> contractPayWay;
+
     private List<Timestamp> receiveTime;
 
     //0-无合同，1-无明细表，2-有合同，3-有明细表
