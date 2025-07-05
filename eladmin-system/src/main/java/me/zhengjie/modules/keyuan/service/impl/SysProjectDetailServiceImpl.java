@@ -146,6 +146,13 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             }
             criteria.setIds(idsList);
         }
+        if (criteria.getReceiveFinished() != null) {
+            if (criteria.getReceiveFinished()) {
+                criteria.setReceiveAmount("contractAmount");
+            } else {
+                criteria.setReceiveAmountLess("contractAmount");
+            }
+        }
     }
 
     @Override

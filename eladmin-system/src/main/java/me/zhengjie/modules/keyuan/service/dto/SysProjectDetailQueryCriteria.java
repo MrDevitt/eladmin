@@ -77,12 +77,18 @@ public class SysProjectDetailQueryCriteria {
     @Query(type = Query.Type.IN)
     private List<Integer> contractPayWay;
 
+    @Query(type = Query.Type.GREATER_THAN_COLUMN)
+    private String receiveAmount;
+
+    @Query(type = Query.Type.LESS_THAN_NQ_COLUMN, propName = "receiveAmount")
+    private String receiveAmountLess;
+
     private List<Timestamp> receiveTime;
 
     //0-无合同，1-无明细表，2-有合同，3-有明细表
     private List<Integer> attachmentStatus;
 
-    private boolean queryInvoicedNotReceiveData = false;
-
     private String idsStr;
+
+    private Boolean receiveFinished;
 }

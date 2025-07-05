@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Getter
@@ -21,5 +22,17 @@ public class PageResult<T> {
                 .map(converter)
                 .collect(Collectors.toList());
         return new PageResult<>(newContent, totalElements);
+    }
+
+    public PageResult<T> filter(Predicate<T> predicate) {
+        if (predicate == null) {
+            throw new IllegalArgumentException("Predicate cannot be null");
+        }
+
+        List<T> filteredContent = this.content.stream()
+                .filter(predicate)
+                .collect(Collectors.toList());
+
+        return new PageResult<>(filteredContent, totalElements);
     }
 }

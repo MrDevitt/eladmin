@@ -53,6 +53,8 @@ public @interface Query {
         EQUAL
         // Dong ZhaoYang 2017/8/7 大于等于
         , GREATER_THAN
+        // 大于等于其他行
+        , GREATER_THAN_COLUMN
         // Dong ZhaoYang 2017/8/7 小于等于
         , LESS_THAN
         // Dong ZhaoYang 2017/8/7 中模糊查询
@@ -65,6 +67,8 @@ public @interface Query {
         , GREATER_THAN_NQ
         // Dong ZhaoYang 2017/8/7 小于
         , LESS_THAN_NQ
+        //  小于其他行
+        , LESS_THAN_NQ_COLUMN
         // jie 2019/6/4 包含
         , IN
         // 不包含
@@ -74,7 +78,7 @@ public @interface Query {
         // between
         , BETWEEN
         // 不为空
-        ,NOT_NULL
+        , NOT_NULL
         // 为空
         ,IS_NULL,
         // Aborn Jiang 2022/06/01, 对应SQL: SELECT * FROM table WHERE FIND_IN_SET('querytag', table.tags);

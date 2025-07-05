@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -213,6 +214,9 @@ public class SysProjectStatisticsService {
         SysShouldReceiveData sysShouldReceiveData = new SysShouldReceiveData();
         SysProjectDetailQueryCriteria queryCriteria = new SysProjectDetailQueryCriteria();
         queryCriteria.setShouldReceiveAmount(0);
+        queryCriteria.setCreateTime(List.of(
+                Timestamp.valueOf(LocalDateTime.of(2023, 1, 1, 0, 0, 0, 0)),
+                Timestamp.valueOf(LocalDateTime.now())));
         List<SysProjectDetailDto> sysProjectDetailDtoList = sysProjectDetailService.queryAll(queryCriteria);
 
         Map<Long, Map<String, Double>> shouldReceiveByNameAndType = new HashMap<>();

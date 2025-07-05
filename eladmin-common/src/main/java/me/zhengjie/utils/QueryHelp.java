@@ -135,6 +135,9 @@ public class QueryHelp {
                             list.add(cb.greaterThanOrEqualTo(getExpression(attributeName, join, root)
                                     .as((Class<? extends Comparable>) fieldType), (Comparable) val));
                             break;
+                        case GREATER_THAN_COLUMN:
+                            list.add(cb.greaterThanOrEqualTo(getExpression(attributeName, join, root)
+                                    .as((Class<? extends Comparable>) fieldType), getExpression((String) val, join, root)));
                         case LESS_THAN:
                             list.add(cb.lessThanOrEqualTo(getExpression(attributeName, join, root)
                                     .as((Class<? extends Comparable>) fieldType), (Comparable) val));
@@ -147,16 +150,20 @@ public class QueryHelp {
                             list.add(cb.lessThan(getExpression(attributeName, join, root)
                                     .as((Class<? extends Comparable>) fieldType), (Comparable) val));
                             break;
+                        case LESS_THAN_NQ_COLUMN:
+                            list.add(cb.lessThan(getExpression(attributeName, join, root)
+                                    .as((Class<? extends Comparable>) fieldType), getExpression((String) val, join, root)));
+                            break;
                         case INNER_LIKE:
                             list.add(cb.like(getExpression(attributeName, join, root)
                                     .as(String.class), "%" + val.toString() + "%"));
                             break;
                         case LEFT_LIKE:
-                            list.add(cb.like(getExpression(attributeName,join,root)
+                            list.add(cb.like(getExpression(attributeName, join, root)
                                     .as(String.class), "%" + val.toString()));
                             break;
                         case RIGHT_LIKE:
-                            list.add(cb.like(getExpression(attributeName,join,root)
+                            list.add(cb.like(getExpression(attributeName, join, root)
                                     .as(String.class), val.toString() + "%"));
                             break;
                         case IN:
