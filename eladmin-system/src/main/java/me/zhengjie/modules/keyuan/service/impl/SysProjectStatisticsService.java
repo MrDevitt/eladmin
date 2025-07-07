@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoiceTableRow;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoicedNotReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
-import me.zhengjie.modules.keyuan.domain.statistics.SysShouldReceiveData;
+import me.zhengjie.modules.keyuan.domain.statistics.SysReceiveStatistics;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.AccountBalanceData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceTableRow;
@@ -23,6 +23,7 @@ import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import me.zhengjie.utils.FileUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -210,40 +211,91 @@ public class SysProjectStatisticsService {
         return String.valueOf(calendar.get(Calendar.YEAR));
     }
 
-    public SysShouldReceiveData getSysShouldReceiveData() {
-        SysShouldReceiveData sysShouldReceiveData = new SysShouldReceiveData();
+    public SysReceiveStatistics getSysReceiveStatistics(boolean shouldReceive) {
+        SysReceiveStatistics sysReceiveStatistics = new SysReceiveStatistics();
         SysProjectDetailQueryCriteria queryCriteria = new SysProjectDetailQueryCriteria();
-        queryCriteria.setShouldReceiveAmount(0);
         queryCriteria.setCreateTime(List.of(
                 Timestamp.valueOf(LocalDateTime.of(2023, 1, 1, 0, 0, 0, 0)),
                 Timestamp.valueOf(LocalDateTime.now())));
         List<SysProjectDetailDto> sysProjectDetailDtoList = sysProjectDetailService.queryAll(queryCriteria);
 
-        Map<Long, Map<String, Double>> shouldReceiveByNameAndType = new HashMap<>();
-        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
-        for (SysProjectDetailDto sysProjectDetailDto : sysProjectDetailDtoList) {
-            String type = ProjectUtils.projectTypeToName(sysProjectDetailDto.getProjectType());
-            SysProjectPersonDto personDto = sysProjectPersonDtoMap.get(sysProjectDetailDto.getSalesPerson());
-            Map<String, Double> shouldReceiveByType = shouldReceiveByNameAndType.computeIfAbsent(personDto.getId(), k -> new HashMap<>());
-            double currentAmount = shouldReceiveByType.computeIfAbsent(type, k -> 0d);
-            double totalAmount = shouldReceiveByType.computeIfAbsent("sum", k -> 0d);
-            shouldReceiveByType.put(type, currentAmount + ProjectUtils.dbPriceToRealPrice(sysProjectDetailDto.getShouldReceiveAmount()));
-            shouldReceiveByType.put("sum", totalAmount + ProjectUtils.dbPriceToRealPrice(sysProjectDetailDto.getShouldReceiveAmount()));
-        }
-
-        List<Map<String, String>> tableData = new ArrayList<>();
-        shouldReceiveByNameAndType.forEach((key, value) -> {
-            Map<String, String> data = new HashMap<>();
-            String name = sysProjectPersonDtoMap.get(key).getName();
-            data.put("name", name);
-            value.forEach((key1, value1) -> data.put(key1, String.format("%.2f", value1)));
-            tableData.add(data);
-        });
-        tableData.sort(Comparator.comparing(a -> -Integer.parseInt(a.get("sum").substring(0, a.get("sum").length() - 3))));
-        sysShouldReceiveData.setTableData(tableData);
-        return sysShouldReceiveData;
+        sysReceiveStatistics.setReceiveAmountRows(buildReceiveAmountRowList(sysProjectDetailDtoList, shouldReceive));
+        sysReceiveStatistics.setReceiveRateRows(buildReceiveRateRowList(sysProjectDetailDtoList, shouldReceive));
+        return sysReceiveStatistics;
     }
 
+    @NotNull
+    private List<SysReceiveStatistics.ReceiveAmountRow> buildReceiveAmountRowList(List<SysProjectDetailDto> sysProjectDetailDtoList, boolean shouldReceive) {
+        List<SysProjectDetailDto> sysProjectDetailDtoListShouldReceive = shouldReceive ?
+                sysProjectDetailDtoList.stream().filter(e -> e.getShouldReceiveAmount() != null && e.getShouldReceiveAmount() > 0).collect(Collectors.toList()) :
+                sysProjectDetailDtoList;
+        Map<Long, Map<Integer, Long>> shouldReceiveByNameAndType = new HashMap<>();
+        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
+        for (SysProjectDetailDto dto : sysProjectDetailDtoListShouldReceive) {
+            Map<Integer, Long> shouldReceiveByType = shouldReceiveByNameAndType.computeIfAbsent(dto.getSalesPerson(), k -> new HashMap<>());
+            long currentAmount = shouldReceiveByType.computeIfAbsent(dto.getProjectType(), k -> 0L);
+            long totalAmount = shouldReceiveByType.computeIfAbsent(-1, k -> 0L);
+            long toAdd = shouldReceive ?
+                    Optional.ofNullable(dto.getShouldReceiveAmount()).orElse(0) :
+                    dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0);
+            shouldReceiveByType.put(dto.getProjectType(), currentAmount + Math.max(toAdd, 0));
+            shouldReceiveByType.put(-1, totalAmount + Math.max(toAdd, 0));
+        }
+
+        List<SysReceiveStatistics.ReceiveAmountRow> receiveAmountRows = new ArrayList<>();
+        shouldReceiveByNameAndType.forEach((key, value) -> {
+            SysReceiveStatistics.ReceiveAmountRow row = new SysReceiveStatistics.ReceiveAmountRow();
+            String name = sysProjectPersonDtoMap.get(key).getName();
+            row.setName(name);
+            row.setExam(ProjectUtils.dbPriceToRealPriceString(value.getOrDefault(ProjectUtils.PROJECT_TYPE_EXAM, 0L)));
+            row.setSupervise(ProjectUtils.dbPriceToRealPriceString(value.getOrDefault(ProjectUtils.PROJECT_TYPE_SUPERVISE, 0L)));
+            row.setDesign(ProjectUtils.dbPriceToRealPriceString(value.getOrDefault(ProjectUtils.PROJECT_TYPE_DESIGN, 0L)));
+            row.setOther(ProjectUtils.dbPriceToRealPriceString(value.getOrDefault(ProjectUtils.PROJECT_TYPE_OTHER, 0L)));
+            row.setSum(ProjectUtils.dbPriceToRealPriceString(value.getOrDefault(-1, 0L)));
+            receiveAmountRows.add(row);
+        });
+        receiveAmountRows.sort(Comparator.comparingDouble(o -> -Double.parseDouble(o.getSum())));
+        return receiveAmountRows;
+    }
+
+    private List<SysReceiveStatistics.ReceiveRateRow> buildReceiveRateRowList(List<SysProjectDetailDto> sysProjectDetailDtoList, boolean shouldReceive) {
+        Map<Long, Map<Integer, long[]>> personAndYearMap = new HashMap<>();
+        for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
+            Map<Integer, long[]> yearMap = personAndYearMap.computeIfAbsent(detailDto.getSalesPerson(), k -> new HashMap<>());
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(detailDto.getCreateTime().getTime());
+            int year = calendar.get(Calendar.YEAR);
+            long[] amountArray = yearMap.computeIfAbsent(year, k -> new long[2]);
+            long[] amountTotalArray = yearMap.computeIfAbsent(-1, k -> new long[2]);
+            long receiveAmount = Optional.ofNullable(detailDto.getReceiveAmount()).orElse(0);
+            long shouldReceiveAmount = Optional.ofNullable(detailDto.getShouldReceiveAmount()).orElse(0);
+            amountArray[0] += receiveAmount;
+            amountArray[1] += shouldReceive ? receiveAmount + shouldReceiveAmount : Math.max(receiveAmount, detailDto.getContractAmount());
+            amountTotalArray[0] += receiveAmount;
+            amountTotalArray[1] += shouldReceive ? receiveAmount + shouldReceiveAmount : Math.max(receiveAmount, detailDto.getContractAmount());
+        }
+        List<SysReceiveStatistics.ReceiveRateRow> receiveRateRowList = new ArrayList<>();
+        Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
+        personAndYearMap.forEach((personId, yearMap) -> {
+            SysReceiveStatistics.ReceiveRateRow receiveRateRow = new SysReceiveStatistics.ReceiveRateRow();
+            SysProjectPersonDto personDto = sysProjectPersonDtoMap.get(personId);
+            receiveRateRow.setName(personDto.getName());
+            receiveRateRow.setRate_2023(calcRate(yearMap.getOrDefault(2023, new long[]{0, 0})));
+            receiveRateRow.setRate_2024(calcRate(yearMap.getOrDefault(2024, new long[]{0, 0})));
+            receiveRateRow.setRate_2025(calcRate(yearMap.getOrDefault(2025, new long[]{0, 0})));
+            receiveRateRow.setRate(calcRate(yearMap.getOrDefault(-1, new long[]{0, 0})));
+            receiveRateRowList.add(receiveRateRow);
+        });
+        receiveRateRowList.sort(Comparator.comparingDouble(o -> "/".equals(o.getRate()) ? -1d : Double.parseDouble(o.getRate())));
+        return receiveRateRowList;
+    }
+
+    private static String calcRate(long[] amountArray) {
+        if (amountArray[1] == 0) {
+            return "/";
+        }
+        return String.format("%.2f", amountArray[0] * 1.0 / amountArray[1] * 100);
+    }
 
     public BalanceData getBalanceData(long endTime) {
         BalanceData balanceData = new BalanceData();

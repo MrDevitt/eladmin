@@ -8,7 +8,7 @@ import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoiceTableRow;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoicedNotReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
-import me.zhengjie.modules.keyuan.domain.statistics.SysShouldReceiveData;
+import me.zhengjie.modules.keyuan.domain.statistics.SysReceiveStatistics;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceData;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.impl.SysProjectStatisticsService;
@@ -49,8 +49,16 @@ public class SysProjectStatisticsController {
     @Log("查询项目应收款数据")
     @ApiOperation("查询项目应收款数据")
     @PreAuthorize("@el.check('sysProjectStatistics:list')")
-    public ResponseEntity<SysShouldReceiveData> querySysShouldReceiveData() {
-        return new ResponseEntity<>(sysProjectStatisticsService.getSysShouldReceiveData(), HttpStatus.OK);
+    public ResponseEntity<SysReceiveStatistics> querySysShouldReceiveData() {
+        return new ResponseEntity<>(sysProjectStatisticsService.getSysReceiveStatistics(true), HttpStatus.OK);
+    }
+
+    @GetMapping("/notReceive")
+    @Log("查询项目未收款数据")
+    @ApiOperation("查询项目未收款数据")
+    @PreAuthorize("@el.check('sysProjectStatistics:list')")
+    public ResponseEntity<SysReceiveStatistics> querySysNotReceiveData() {
+        return new ResponseEntity<>(sysProjectStatisticsService.getSysReceiveStatistics(false), HttpStatus.OK);
     }
 
     @GetMapping("/invoice")
