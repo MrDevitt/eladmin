@@ -572,14 +572,21 @@ public class SysProjectStatisticsService {
             o.put("项目区域", projectDetailDto.getProjectRegion());
             o.put("业务人", personDtoMap.get(projectDetailDto.getSalesPerson()).getName());
             o.put("合同金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getContractAmount()));
+            o.put("签订时间", projectDetailDto.getContractTime());
+            o.put("乙方名称", projectDetailDto.getPartyB());
             long receiveAmount = 0, invoiceAmount = 0;
+            Timestamp latestReceiveTime = new Timestamp(0);
             for (SysProjectReceiveDto receiveDto : v) {
                 invoiceAmount += receiveDto.getInvoiceAmount();
                 receiveAmount += receiveDto.getReceiveAmount();
+                if (receiveDto.getReceiveTime().after(latestReceiveTime)) {
+                    latestReceiveTime = receiveDto.getReceiveTime();
+                }
             }
             o.put("开票总金额", ProjectUtils.dbPriceToRealPrice(invoiceAmount));
             o.put("收款总金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getReceiveAmount()));
             o.put("项目进度", projectDetailDto.getProjectProgress() + "%");
+            o.put("最新收款时间", latestReceiveTime);
             o.put("本月收款金额", ProjectUtils.dbPriceToRealPrice(receiveAmount));
             o.put("业务中心应计金额", ProjectUtils.dbPriceToRealPrice(projectDetailDto.getSalesPercent() * receiveAmount / 100));
             if (projectDetailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_SUPERVISE) {

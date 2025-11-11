@@ -217,7 +217,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             map.put("合同付款方式", ProjectUtils.PROJECT_PAY_WAYS[sysProjectDetail.getContractPayWay()]);
             map.put("合同金额", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getContractAmount()));
             map.put("已收款", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getReceiveAmount()));
-            map.put("未收款", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getContractAmount()) - ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getReceiveAmount()));
+            map.put("未收款", Math.max(0d, ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getContractAmount()) - ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getReceiveAmount())));
             map.put("项目进度", sysProjectDetail.getProjectProgress());
             map.put("应收款", ProjectUtils.dbPriceToRealPrice(sysProjectDetail.getShouldReceiveAmount()));
             map.put("业务人员", personDtoMap.get(sysProjectDetail.getSalesPerson()).getName());

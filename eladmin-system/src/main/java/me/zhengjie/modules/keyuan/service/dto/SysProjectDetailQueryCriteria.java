@@ -91,4 +91,7 @@ public class SysProjectDetailQueryCriteria {
     private String idsStr;
 
     private Boolean receiveFinished;
+
+    @Query(type = Query.Type.INNER_LIKE)
+    private String partyA;
 }

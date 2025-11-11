@@ -91,11 +91,23 @@ public class SysProjectDetailTask {
                 shouldPay = progress < 90 ? contractAmount * 60 / 100 : progress < 100 ? contractAmount * 90 / 100 : contractAmount;
                 break;
             case 5:
+                //noinspection DuplicateExpressions
                 shouldPay = progress < 80 ? contractAmount * 50 / 100 : progress < 100 ? contractAmount * 80 / 100 : contractAmount;
                 break;
             case 6:
                 //noinspection DuplicateExpressions
                 shouldPay = progress < 100 ? contractAmount * 90 / 100 : contractAmount;
+                break;
+            case 7:
+                //noinspection DuplicateExpressions
+                shouldPay = progress < 99 ? contractAmount * 50 / 100 : progress < 100 ? contractAmount * 90 / 100 : contractAmount;
+                break;
+            case 8:
+                shouldPay = progress < 70 ? contractAmount * 30 / 100 : progress < 100 ? contractAmount * 70 / 100 : contractAmount;
+                break;
+            case 9:
+                //noinspection DuplicateExpressions
+                shouldPay = progress < 70 ? contractAmount * 30 / 100 : progress < 100 ? contractAmount * 80 / 100 : contractAmount;
                 break;
             default:
                 throw new RuntimeException("invalid contractPayWay, projectId=" + sysProjectDetailDto.getId());
