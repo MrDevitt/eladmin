@@ -42,10 +42,17 @@ public class KingdeeService {
     @Value("${kingdee.instance_id}")
     private String instanceId;
 
+    @Value("${kingdee.enabled}")
+    private boolean enabled;
+
     private final Map<Integer, Map<String, AccountBalanceReplyRow>> balanceReplyByMonthAndNumber = new HashMap<>();
 
     @PostConstruct
     public void init() {
+        if (!enabled) {
+            log.info("KingdeeService disabled");
+            return;
+        }
         log.info("KingdeeService init start");
         try {
             ApiClient defaultApiClient = Configuration.getDefaultApiClient();

@@ -9,6 +9,7 @@ import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectGuaranteeService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
+import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
@@ -48,6 +49,8 @@ public class SysProjectDetailTask {
     private final SysProjectReceiveService sysProjectReceiveService;
 
     private final SysProjectPersonService sysProjectPersonService;
+
+    private final SysProjectTransactionService sysProjectTransactionService;
 
 
     public void updateShouldReceiveAmount() {
@@ -242,5 +245,12 @@ public class SysProjectDetailTask {
     //每小时
     public void refreshKingdeeCache() throws ApiException {
         kingdeeService.refreshBalanceRowCache();
+    }
+
+    public void updateTransactionByReceive() {
+        List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(new SysProjectReceiveQueryCriteria());
+        for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoList) {
+            sysProjectTransactionService.updateTransactionByReceive(receiveDto);
+        }
     }
 }

@@ -114,3 +114,5 @@ file:
   # 文件大小 /M
   maxSize: 100
   avatarMaxSize: 5
+kingdee:
+  enabled: false

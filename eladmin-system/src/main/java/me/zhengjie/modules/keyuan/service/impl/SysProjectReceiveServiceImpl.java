@@ -22,6 +22,7 @@ import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectReceiveRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
+import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectReceiveMapper;
@@ -59,6 +60,8 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
 
     private final SysProjectDetailRepository sysProjectDetailRepository;
 
+    private final SysProjectTransactionService sysProjectTransactionService;
+
 
     @Override
     public PageResult<SysProjectReceiveDto> queryAll(SysProjectReceiveQueryCriteria criteria, Pageable pageable) {
@@ -90,6 +93,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         sysProjectReceiveRepository.save(resources);
         updateReceiveAmount(resources.getProjectId());
         SysProjectStatistics.CACHE = null;
+        sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(resources));
     }
 
     @Override
@@ -99,8 +103,9 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         ValidationUtil.isNull(sysProjectReceive.getId(), "SysProjectReceive", "id", resources.getId());
         sysProjectReceive.copy(resources);
         sysProjectReceiveRepository.save(sysProjectReceive);
-        updateReceiveAmount(resources.getProjectId());
+        updateReceiveAmount(sysProjectReceive.getProjectId());
         SysProjectStatistics.CACHE = null;
+        sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive));
     }
 
     @Override

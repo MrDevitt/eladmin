@@ -38,6 +38,11 @@ public class ProjectUtils {
     public static final Set<String> GENERAL_TAXPAYERS = new HashSet<>(List.of("西藏科源工程检测有限公司", "西藏鸿沣工程技术管理有限公司"));
     public static final int MAX_INVOICE_AMOUNT = 500 * 1000 * 1000;
 
+    public static final int PROJECT_TRANSACTION_DIRECTION_INCOME = 0;
+    public static final int PROJECT_TRANSACTION_DIRECTION_EXPENSE = 1;
+
+    public static final String PROJECT_CONFIG_KEY_BANK_ACCOUNT = "accountNumberConfig";
+
     //所有部门汇算方法
     static {
         ProjectDepartment sales = new ProjectDepartment(PROJECT_DEPARTMENT_SALES);
