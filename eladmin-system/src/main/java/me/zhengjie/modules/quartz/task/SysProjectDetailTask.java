@@ -248,7 +248,9 @@ public class SysProjectDetailTask {
     }
 
     public void updateTransactionByReceive() {
-        List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(new SysProjectReceiveQueryCriteria());
+        SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
+        criteria.setReceiveAmount(0);
+        List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(criteria);
         for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoList) {
             sysProjectTransactionService.updateTransactionByReceive(receiveDto);
         }

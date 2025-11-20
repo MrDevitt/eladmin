@@ -17,8 +17,18 @@ public class ProjectUtils {
     private static final String[] MONTH_NAMES = new String[]{"一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"};
     public static final String[] PROJECT_TYPE_NAMES = new String[]{"检测", "监理", "设计", "其他"};
     public static final String[] PROJECT_TYPE_NAMES_ENGLISH = new String[]{"exam", "supervise", "design", "other"};
-    public static final String[] PROJECT_PAY_WAYS = new String[]{"签合同50，完工结清", "一次性付清", "签合同30进度50付30完工结清", "按进度拨付",
-            "签合同60，施工图(进度90)30，竣工验收10", "签合同50，验收(进度80)30，审计20", "合同签订报告通过90，基础验收10"};
+    public static final String[] PROJECT_PAY_WAYS = new String[]{
+            "签合同50，完工结清",
+            "一次性付清",
+            "签合同30进度50付30完工结清",
+            "按进度拨付",
+            "签合同60，施工图(进度90)30，竣工验收10",
+            "签合同50，验收(进度80)30，审计20",
+            "合同签订报告通过90，基础验收10",
+            "签合同50，完成检测40，终验10",
+            "签合同30，完成70%检测40，完成检测30",
+            "签合同30，完成70%检测50，完成检测20"
+    };
     public static final String[] PROJECT_GUARANTEE_STATUS = new String[]{"担保中", "担保逾期", "担保完成", "设计等待资金", "设计待签合同", "设计终止"};
     public static final String[] PROJECT_INVOICE_NAMES = new String[]{"专票", "普票", "无票"};
     public static final String[] PROJECT_EXAM_REGIONS = new String[]{"日喀则", "拉萨", "阿里", "那曲"};

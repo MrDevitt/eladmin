@@ -4,4 +4,4 @@ COPY ${JAR_FILE} app.jar
 RUN ls -lh
 ENV TZ=Asia/Shanghai
 EXPOSE 8000
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java","-jar","-Dspring.profiles.active=prod","/app.jar"]

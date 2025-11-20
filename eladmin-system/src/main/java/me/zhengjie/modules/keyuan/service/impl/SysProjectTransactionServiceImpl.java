@@ -86,7 +86,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     }
 
     private void updateQueryCriteria(SysProjectTransactionQueryCriteria criteria) {
-        if (getAccountNumberConfig().getBankAccountNumberSet().contains(criteria.getAccountNumber())) {
+        if (criteria != null && getAccountNumberConfig().getBankAccountNumberSet().contains(criteria.getAccountNumber())) {
             criteria.setBankNumber(criteria.getAccountNumber());
             criteria.setAccountNumber(null);
         }
