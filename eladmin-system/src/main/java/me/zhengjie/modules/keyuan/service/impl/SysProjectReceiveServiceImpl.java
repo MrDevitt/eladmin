@@ -92,7 +92,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     public void create(SysProjectReceive resources) {
         sysProjectReceiveRepository.save(resources);
         updateReceiveAmount(resources.getProjectId());
-        SysProjectStatistics.CACHE = null;
+        SysProjectStatistics.CACHE_MAP.clear();
         sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(resources));
     }
 
@@ -104,7 +104,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         sysProjectReceive.copy(resources);
         sysProjectReceiveRepository.save(sysProjectReceive);
         updateReceiveAmount(sysProjectReceive.getProjectId());
-        SysProjectStatistics.CACHE = null;
+        SysProjectStatistics.CACHE_MAP.clear();
         sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive));
     }
 
@@ -119,7 +119,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
             sysProjectReceiveRepository.deleteById(id);
         }
         projectIdSet.forEach(this::updateReceiveAmount);
-        SysProjectStatistics.CACHE = null;
+        SysProjectStatistics.CACHE_MAP.clear();
     }
 
     @Override

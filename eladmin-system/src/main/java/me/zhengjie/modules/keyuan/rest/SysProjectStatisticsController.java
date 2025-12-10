@@ -40,8 +40,8 @@ public class SysProjectStatisticsController {
     @Log("查询项目统计数据")
     @ApiOperation("查询项目统计数据")
     @PreAuthorize("@el.check('sysProjectStatistics:list')")
-    public ResponseEntity<SysProjectStatistics> querySysProjectStatistics() {
-        return new ResponseEntity<>(sysProjectStatisticsService.getSysProjectStatisticsInfo(), HttpStatus.OK);
+    public ResponseEntity<SysProjectStatistics> querySysProjectStatistics(@RequestParam String contractYear, @RequestParam String receiveYear) {
+        return new ResponseEntity<>(sysProjectStatisticsService.getSysProjectStatisticsInfo(contractYear, receiveYear), HttpStatus.OK);
     }
 
 

@@ -165,7 +165,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             throw new EntityExistException(SysProjectDetail.class, "contract_number", resources.getContractNumber());
         }
         sysProjectDetailRepository.save(resources);
-        SysProjectStatistics.CACHE = null;
+        SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;
     }
 
@@ -183,7 +183,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         }
         sysProjectDetail.copy(resources);
         sysProjectDetailRepository.save(sysProjectDetail);
-        SysProjectStatistics.CACHE = null;
+        SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;
     }
 
@@ -197,7 +197,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             sysProjectReceiveService.queryAll(criteria).forEach(e -> receiveIdSet.add(e.getId()));
         }
         sysProjectReceiveService.deleteAll(receiveIdSet.toArray(new Long[0]));
-        SysProjectStatistics.CACHE = null;
+        SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;
     }
 

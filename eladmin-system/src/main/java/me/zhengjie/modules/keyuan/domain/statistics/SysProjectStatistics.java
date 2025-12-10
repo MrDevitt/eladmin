@@ -15,7 +15,6 @@ import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.TreeMap;
 @Data
 public class SysProjectStatistics {
 
-    public static SysProjectStatistics CACHE = null;
+    public static Map<String, SysProjectStatistics> CACHE_MAP = new HashMap<>();
 
 
     /**
@@ -39,15 +38,6 @@ public class SysProjectStatistics {
     List<TableOption> contractByRegionTableList = new ArrayList<>();
     Map<String, Map<String, double[]>> contractByTypeAndPerson = ProjectUtils.generateTypeMap();
     List<TableOption> contractByPersonTableList = new ArrayList<>();
-
-    Map<String, Map<String, double[]>> contractByTypeAndDepartment = ProjectUtils.generateTypeMap();
-    List<TableOption> contractByDepartmentTableList = new ArrayList<>();
-
-    Map<String, Map<String, double[]>> contractShareByTypeAndPerson = ProjectUtils.generateTypeMap();
-    List<TableOption> contractShareByPersonTableList = new ArrayList<>();
-
-    Map<String, Map<String, double[]>> examContractByRegionAndPerson = ProjectUtils.generateRegionMap();
-    List<TableOption> examContractByPersonTableList = new ArrayList<>();
 
     /**
      * 收款量统计数据
@@ -69,15 +59,12 @@ public class SysProjectStatistics {
     List<TableOption> examReceiveByPersonTableList = new ArrayList<>();
 
 
-    public void calcInnerData() {
-        buildOptionAndTotal(contractByYearAndType, contractChartOption, contractTotalByType, "业务量指标");
+    public void calcInnerData(String contractYear, String receiveYear) {
+        buildOptionAndTotal(contractByYearAndType, contractChartOption, contractTotalByType, "业务量指标", contractYear);
         buildTableFromMap(contractByRegionTableList, contractByTypeAndRegion, "地区");
         buildTableFromMap(contractByPersonTableList, contractByTypeAndPerson, "业务人");
-        buildTableFromMap(contractByDepartmentTableList, contractByTypeAndDepartment, "部门");
-        buildTableFromMap(contractShareByPersonTableList, contractShareByTypeAndPerson, "业务人");
-        buildTableFromMap(examContractByPersonTableList, examContractByRegionAndPerson, "业务人", ProjectUtils.PROJECT_EXAM_REGIONS);
 
-        buildOptionAndTotal(receiveByYearAndType, receiveChartOption, receiveTotalByType, "收款指标");
+        buildOptionAndTotal(receiveByYearAndType, receiveChartOption, receiveTotalByType, "收款指标", receiveYear);
         buildTableFromMap(receiveByRegionTableList, receiveByTypeAndRegion, "地区");
         buildTableFromMap(receiveByPersonTableList, receiveByTypeAndPerson, "业务人");
         buildTableFromMap(receiveByDepartmentTableList, receiveByTypeAndDepartment, "部门");
@@ -91,13 +78,13 @@ public class SysProjectStatistics {
             Map<String, Map<String, double[]>> dataByYearAndType,
             ChartOption chartOption,
             Map<String, Double> dataTotalByType,
-            String titleText) {
+            String titleText,
+            String currentYear) {
         for (String typeName : ProjectUtils.PROJECT_TYPE_NAMES) {
             chartOption.getBaseOption().getLegend().getData().add(typeName);
             chartOption.getBaseOption().getSeries().add(new BarOptionSeries(typeName));
         }
         chartOption.getBaseOption().getSeries().add(new PieOptionSeries());
-        String currentYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
         for (Map.Entry<String, Map<String, double[]>> entry : dataByYearAndType.entrySet()) {
             String year = entry.getKey();
             chartOption.getBaseOption().getTimeline().getData().add(year);
@@ -155,9 +142,6 @@ public class SysProjectStatistics {
         contractByYearAndType.clear();
         contractByTypeAndRegion.clear();
         contractByTypeAndPerson.clear();
-        contractByTypeAndDepartment.clear();
-        contractShareByTypeAndPerson.clear();
-        examContractByRegionAndPerson.clear();
 
         receiveByYearAndType.clear();
         receiveByTypeAndRegion.clear();

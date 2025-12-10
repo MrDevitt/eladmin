@@ -58,12 +58,13 @@ public class SysProjectStatisticsService {
 
     private final KingdeeService kingdeeService;
 
-    public SysProjectStatistics getSysProjectStatisticsInfo() {
-        if (SysProjectStatistics.CACHE == null) {
+    public SysProjectStatistics getSysProjectStatisticsInfo(String contractYear, String receiveYear) {
+        String key = contractYear + receiveYear;
+        if (!SysProjectStatistics.CACHE_MAP.containsKey(key)) {
             SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
             List<SysProjectDetailDto> sysProjectDetailDtoList = sysProjectDetailService.queryAll(new SysProjectDetailQueryCriteria());
             Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
-            buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap);
+            buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap, contractYear);
 
             Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailDtoList.stream().collect(Collectors.toMap(
                     SysProjectDetailDto::getId,
@@ -71,19 +72,19 @@ public class SysProjectStatisticsService {
                     (x, y) -> x
             ));
             List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(new SysProjectReceiveQueryCriteria());
-            buildReceiveStatistics(sysProjectStatistics, sysProjectReceiveDtoList, sysProjectDetailDtoMap, sysProjectPersonDtoMap);
+            buildReceiveStatistics(sysProjectStatistics, sysProjectReceiveDtoList, sysProjectDetailDtoMap, sysProjectPersonDtoMap, receiveYear);
 
-            sysProjectStatistics.calcInnerData();
-            SysProjectStatistics.CACHE = sysProjectStatistics;
+            sysProjectStatistics.calcInnerData(contractYear, receiveYear);
+            SysProjectStatistics.CACHE_MAP.put(key, sysProjectStatistics);
         }
-        return SysProjectStatistics.CACHE;
+        return SysProjectStatistics.CACHE_MAP.get(key);
     }
 
     private static void buildContractStatistics(
             SysProjectStatistics sysProjectStatistics,
             List<SysProjectDetailDto> sysProjectDetailDtoList,
-            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap) {
-        String currentYear = getLastMonthYear();
+            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap,
+            String contractYear) {
         for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
             double contractAmount = ProjectUtils.dbPriceToRealPrice(detailDto.getContractAmount());
             String projectType = ProjectUtils.projectTypeToName(detailDto.getProjectType());
@@ -98,7 +99,7 @@ public class SysProjectStatisticsService {
             typeMonthData[month] += contractAmount;
             typeMonthData[12] += contractAmount;
 
-            if (currentYear.equals(year)) {
+            if (contractYear.equals(year)) {
                 Map<String, double[]> regionMap = sysProjectStatistics.getContractByTypeAndRegion().get(projectType);
                 double[] regionData = regionMap.computeIfAbsent(detailDto.getProjectRegion(), k -> new double[13]);
                 regionData[month] += contractAmount;
@@ -110,20 +111,6 @@ public class SysProjectStatisticsService {
                 personData[month] += contractAmount;
                 personData[12] += contractAmount;
 
-                Map<String, double[]> departmentMap = sysProjectStatistics.getContractByTypeAndDepartment().get(projectType);
-                fillDepartmentMap(departmentMap, detailDto, month, contractAmount);
-
-                Map<String, double[]> personShareMap = sysProjectStatistics.getContractShareByTypeAndPerson().get(projectType);
-                double[] personShareData = personShareMap.computeIfAbsent(personName, k -> new double[13]);
-                personShareData[month] += contractAmount * detailDto.getSalesPercent() / 100;
-                personShareData[12] += contractAmount * detailDto.getSalesPercent() / 100;
-
-                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
-                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamContractByRegionAndPerson().get(detailDto.getProjectRegion());
-                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
-                    examPersonData[month] += contractAmount;
-                    examPersonData[12] += contractAmount;
-                }
             }
 
         }
@@ -154,8 +141,8 @@ public class SysProjectStatisticsService {
             SysProjectStatistics sysProjectStatistics,
             List<SysProjectReceiveDto> sysProjectReceiveDtoList,
             Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap,
-            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap) {
-        String currentYear = getLastMonthYear();
+            Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap,
+            String receiveYear) {
         for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoList) {
             double receiveAmount = ProjectUtils.dbPriceToRealPrice(receiveDto.getReceiveAmount());
             SysProjectDetailDto detailDto = sysProjectDetailDtoMap.get(receiveDto.getProjectId());
@@ -175,7 +162,7 @@ public class SysProjectStatisticsService {
             typeMonthData[month] += receiveAmount;
             typeMonthData[12] += receiveAmount;
 
-            if (currentYear.equals(year)) {
+            if (receiveYear.equals(year)) {
                 Map<String, double[]> regionMap = sysProjectStatistics.getReceiveByTypeAndRegion().get(projectType);
                 double[] regionData = regionMap.computeIfAbsent(detailDto.getProjectRegion(), k -> new double[13]);
                 regionData[month] += receiveAmount;
@@ -203,12 +190,6 @@ public class SysProjectStatisticsService {
                 }
             }
         }
-    }
-
-    private static String getLastMonthYear() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MONTH, -1);
-        return String.valueOf(calendar.get(Calendar.YEAR));
     }
 
     public SysReceiveStatistics getSysReceiveStatistics(boolean shouldReceive) {
