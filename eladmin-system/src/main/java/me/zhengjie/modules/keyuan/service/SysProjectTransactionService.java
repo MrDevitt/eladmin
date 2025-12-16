@@ -95,4 +95,6 @@ public interface SysProjectTransactionService {
 
 
     void updateTransactionByReceive(SysProjectReceiveDto receive);
+
+    void deleteTransactionByReceive(Long[] receiveIds);
 }

@@ -80,6 +80,7 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectAccount resources) {
+        checkPrefix(resources);
         resources.setCreateBy(SecurityUtils.getCurrentUsername());
         sysProjectAccountRepository.save(resources);
     }
@@ -95,10 +96,10 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
                 Function.identity(),
                 (x, y) -> x
         ));
+        checkPrefix(sysProjectAccount);
         if (hasCircle(accountMap, sysProjectAccount.getAccountNumber(), new HashSet<>())) {
             throw new RuntimeException("父科目成环,请检查后重新修改！");
         }
-        ;
         sysProjectAccount.setUpdateBy(SecurityUtils.getCurrentUsername());
         sysProjectAccountRepository.save(sysProjectAccount);
     }
@@ -129,6 +130,14 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
         // 回溯：从当前路径移除
         currentPath.remove(current);
         return hasCycle;
+    }
+
+    private void checkPrefix(SysProjectAccount account) {
+        if (account.getParent() != null) {
+            if (!account.getAccountNumber().toString().startsWith(account.getParent().toString())) {
+                throw new RuntimeException("科目" + account.getAccountNumber() + "的编号起始与父科目不一致");
+            }
+        }
     }
 
     @Override

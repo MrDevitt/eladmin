@@ -164,6 +164,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         if (sysProjectDetailRepository.findByContractNumber(resources.getContractNumber()) != null) {
             throw new EntityExistException(SysProjectDetail.class, "contract_number", resources.getContractNumber());
         }
+        resources.setReceiveAmount(0);//防止为null后影响未收款筛选
         sysProjectDetailRepository.save(resources);
         SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;

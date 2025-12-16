@@ -47,11 +47,17 @@ public class SysProjectTransactionQueryCriteria {
     @Query
     private Long accountNumber;
 
+    @Query(type = Query.Type.IN, propName = "accountNumber")
+    private List<Long> accountNumberList;
+
     /**
      * 精确
      */
     @Query
     private Long bankNumber;
+
+    @Query(type = Query.Type.IN, propName = "bankNumber")
+    private List<Long> bankNumberList;
 
     /**
      * 精确
@@ -70,4 +76,7 @@ public class SysProjectTransactionQueryCriteria {
 
     @Query
     private Long projectReceiveId;
+
+    @Query(type = Query.Type.IN, propName = "projectReceiveId")
+    private List<Long> projectReceiveIds;
 }

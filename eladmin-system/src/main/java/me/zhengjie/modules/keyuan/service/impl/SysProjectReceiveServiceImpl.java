@@ -93,7 +93,9 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         sysProjectReceiveRepository.save(resources);
         updateReceiveAmount(resources.getProjectId());
         SysProjectStatistics.CACHE_MAP.clear();
-        sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(resources));
+        if (resources.getReceiveAmount() > 0) {
+            sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(resources));
+        }
     }
 
     @Override
@@ -120,6 +122,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         }
         projectIdSet.forEach(this::updateReceiveAmount);
         SysProjectStatistics.CACHE_MAP.clear();
+        sysProjectTransactionService.deleteTransactionByReceive(ids);
     }
 
     @Override

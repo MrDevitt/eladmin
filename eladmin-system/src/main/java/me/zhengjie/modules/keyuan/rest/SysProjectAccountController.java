@@ -15,14 +15,17 @@
  */
 package me.zhengjie.modules.keyuan.rest;
 
+import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectAccount;
 import me.zhengjie.modules.keyuan.service.SysProjectAccountService;
+import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountQueryCriteria;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionQueryCriteria;
 import me.zhengjie.utils.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -39,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author MrDevitt
@@ -52,6 +56,8 @@ import java.io.IOException;
 public class SysProjectAccountController {
 
     private final SysProjectAccountService sysProjectAccountService;
+
+    private final SysProjectTransactionService sysProjectTransactionService;
 
     @Log("导出数据")
     @ApiOperation("导出数据")
@@ -92,6 +98,16 @@ public class SysProjectAccountController {
     @ApiOperation("删除项目科目信息")
     @PreAuthorize("@el.check('sysProjectAccount:del')")
     public ResponseEntity<Object> deleteSysProjectAccount(@RequestBody Long[] ids) {
+        SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
+        criteria.setAccountNumberList(Arrays.asList(ids));
+        if (CollectionUtils.isNotEmpty(sysProjectTransactionService.queryAll(criteria))) {
+            throw new RuntimeException(Arrays.toString(ids) + "有交易记录，无法删除");
+        }
+        criteria.setAccountNumberList(null);
+        criteria.setBankNumberList(Arrays.asList(ids));
+        if (CollectionUtils.isNotEmpty(sysProjectTransactionService.queryAll(criteria))) {
+            throw new RuntimeException(Arrays.toString(ids) + "有交易记录，无法删除");
+        }
         sysProjectAccountService.deleteAll(ids);
         return new ResponseEntity<>(HttpStatus.OK);
     }

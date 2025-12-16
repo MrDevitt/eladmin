@@ -48,6 +48,11 @@ spring:
         wall:
           config:
             multi-statement-allow: true
+#  jpa:
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
 
 # 登录相关配置
 login:

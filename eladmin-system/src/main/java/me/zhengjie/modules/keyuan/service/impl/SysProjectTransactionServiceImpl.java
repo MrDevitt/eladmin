@@ -17,6 +17,7 @@ package me.zhengjie.modules.keyuan.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
 import me.zhengjie.modules.keyuan.domain.SysProjectTransaction;
 import me.zhengjie.modules.keyuan.domain.config.AccountNumberConfig;
@@ -50,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -86,7 +88,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     }
 
     private void updateQueryCriteria(SysProjectTransactionQueryCriteria criteria) {
-        if (criteria != null && getAccountNumberConfig().getBankAccountNumberSet().contains(criteria.getAccountNumber())) {
+        if (criteria != null && getAccountNumberConfig().isBankAccount(criteria.getAccountNumber())) {
             criteria.setBankNumber(criteria.getAccountNumber());
             criteria.setAccountNumber(null);
         }
@@ -241,45 +243,41 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         return summaryData;
     }
 
+    @Log("更新项目收支明细")
     @Override
     public void updateTransactionByReceive(SysProjectReceiveDto receive) {
-        try {
-            SysProjectDetail detailDto = sysProjectDetailRepository.findById(receive.getProjectId()).orElse(null);
-            assert detailDto != null;
-            AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
-            if (!accountNumberConfig.getPersonWhiteList().contains(detailDto.getSalesPerson())) {
-                return;
-            }
-            long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
-            long otherAmount = (long) receive.getReceiveAmount() - personAmount;
-
-            SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
-            criteria.setProjectReceiveId(receive.getId());
-            List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
-            List<SysProjectTransaction> transactionList = new ArrayList<>();
-            if (CollectionUtils.isEmpty(transactionDtoList)) {
-                SysProjectTransaction personTransaction = buildTransactionFromReceive(receive, detailDto, true);
-                SysProjectTransaction otherTransaction = buildTransactionFromReceive(receive, detailDto, false);
-                transactionList.add(personTransaction);
-                transactionList.add(otherTransaction);
-            } else if (transactionDtoList.size() == 2) {
-                for (SysProjectTransactionDto transactionDto : transactionDtoList) {
-                    if (accountNumberConfig.getPersonAccountNumberSet().contains(transactionDto.getAccountNumber())) {
-                        transactionDto.setAmount((int) personAmount);
-                    } else {
-                        transactionDto.setAmount((int) otherAmount);
-                    }
-                    transactionDto.setTransactionTime(receive.getReceiveTime());
-                    transactionDto.setUpdateBy("系统");
-                }
-                transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
-            } else {
-                throw new RuntimeException("收款生成交易数据异常，receiveId=" + receive.getId());
-            }
-            sysProjectTransactionRepository.saveAll(transactionList);
-        } catch (Throwable e) {
-            log.error("updateTransactionByReceive error", e);
+        SysProjectDetail detailDto = sysProjectDetailRepository.findById(receive.getProjectId()).orElse(new SysProjectDetail());
+        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+        if (!accountNumberConfig.getPersonWhiteList().contains(detailDto.getSalesPerson())) {
+            return;
         }
+        long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
+        long otherAmount = (long) receive.getReceiveAmount() - personAmount;
+
+        SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
+        criteria.setProjectReceiveId(receive.getId());
+        List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
+        List<SysProjectTransaction> transactionList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(transactionDtoList)) {
+            SysProjectTransaction personTransaction = buildTransactionFromReceive(receive, detailDto, true);
+            SysProjectTransaction otherTransaction = buildTransactionFromReceive(receive, detailDto, false);
+            transactionList.add(personTransaction);
+            transactionList.add(otherTransaction);
+        } else if (transactionDtoList.size() == 2) {
+            for (SysProjectTransactionDto transactionDto : transactionDtoList) {
+                if (accountNumberConfig.getPersonAccountNumberSet().contains(transactionDto.getAccountNumber())) {
+                    transactionDto.setAmount((int) personAmount);
+                } else {
+                    transactionDto.setAmount((int) otherAmount);
+                }
+                transactionDto.setTransactionTime(receive.getReceiveTime());
+                transactionDto.setUpdateBy("系统");
+            }
+            transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
+        } else {
+            throw new RuntimeException("收款生成交易数据异常，receiveId=" + receive.getId());
+        }
+        sysProjectTransactionRepository.saveAll(transactionList);
     }
 
     private SysProjectTransaction buildTransactionFromReceive(SysProjectReceiveDto receive, SysProjectDetail detailDto, boolean person) {
@@ -302,6 +300,14 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         transaction.setProjectReceiveId(receive.getId());
         transaction.setCreateBy("系统");
         return transaction;
+    }
+
+    @Override
+    public void deleteTransactionByReceive(Long[] receiveIds) {
+        SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
+        criteria.setProjectReceiveIds(Arrays.asList(receiveIds));
+        Long[] ids = queryAll(criteria).stream().map(SysProjectTransactionDto::getId).toArray(Long[]::new);
+        deleteAll(ids);
     }
 
     private AccountNumberConfig getAccountNumberConfig() {
