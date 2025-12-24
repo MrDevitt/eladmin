@@ -52,6 +52,7 @@ public class ProjectUtils {
     public static final int PROJECT_TRANSACTION_DIRECTION_EXPENSE = 1;
 
     public static final String PROJECT_CONFIG_KEY_BANK_ACCOUNT = "accountNumberConfig";
+    public static final String PROJECT_CONFIG_KEY_STATISTICS = "statisticsConfig";
 
     //所有部门汇算方法
     static {

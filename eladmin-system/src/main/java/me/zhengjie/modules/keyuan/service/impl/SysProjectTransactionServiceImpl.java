@@ -17,7 +17,6 @@ package me.zhengjie.modules.keyuan.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
 import me.zhengjie.modules.keyuan.domain.SysProjectTransaction;
 import me.zhengjie.modules.keyuan.domain.config.AccountNumberConfig;
@@ -243,11 +242,13 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         return summaryData;
     }
 
-    @Log("更新项目收支明细")
     @Override
     public void updateTransactionByReceive(SysProjectReceiveDto receive) {
-        SysProjectDetail detailDto = sysProjectDetailRepository.findById(receive.getProjectId()).orElse(new SysProjectDetail());
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+        if (receive.getReceiveTime().getTime() < accountNumberConfig.getInitialTime()) {
+            return;
+        }
+        SysProjectDetail detailDto = sysProjectDetailRepository.findById(receive.getProjectId()).orElse(new SysProjectDetail());
         if (!accountNumberConfig.getPersonWhiteList().contains(detailDto.getSalesPerson())) {
             return;
         }

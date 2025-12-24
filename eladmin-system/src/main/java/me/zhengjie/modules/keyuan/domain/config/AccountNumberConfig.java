@@ -12,14 +12,15 @@ public class AccountNumberConfig {
     private Set<Long> personAccountNumberSet;
     private Set<Long> bankAccountNumberSet;
     private Set<Long> personWhiteList;
-    private String bankAccountPrefix = "2001";
+    private String bankAccountPrefix;
     private String personAccountPrefix;
+    private long initialTime = 0L;
 
     public boolean isBankAccount(Long accountNumber) {
         return accountNumber != null && accountNumber.toString().startsWith(bankAccountPrefix);
     }
 
     public boolean isPersonAccount(Long accountNumber) {
-        return accountNumber != null && !accountNumber.toString().startsWith(bankAccountPrefix);
+        return accountNumber != null && accountNumber.toString().startsWith(personAccountPrefix);
     }
 }

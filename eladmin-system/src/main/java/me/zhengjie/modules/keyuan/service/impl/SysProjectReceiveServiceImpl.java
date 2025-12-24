@@ -90,7 +90,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectReceive resources) {
-        sysProjectReceiveRepository.save(resources);
+        sysProjectReceiveRepository.saveAndFlush(resources);//确保立即更新，保证updateReceiveAmount中读取到最新数据
         updateReceiveAmount(resources.getProjectId());
         SysProjectStatistics.CACHE_MAP.clear();
         if (resources.getReceiveAmount() > 0) {
@@ -104,7 +104,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         SysProjectReceive sysProjectReceive = sysProjectReceiveRepository.findById(resources.getId()).orElseGet(SysProjectReceive::new);
         ValidationUtil.isNull(sysProjectReceive.getId(), "SysProjectReceive", "id", resources.getId());
         sysProjectReceive.copy(resources);
-        sysProjectReceiveRepository.save(sysProjectReceive);
+        sysProjectReceiveRepository.saveAndFlush(sysProjectReceive);//确保立即更新，保证updateReceiveAmount中读取到最新数据
         updateReceiveAmount(sysProjectReceive.getProjectId());
         SysProjectStatistics.CACHE_MAP.clear();
         sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive));

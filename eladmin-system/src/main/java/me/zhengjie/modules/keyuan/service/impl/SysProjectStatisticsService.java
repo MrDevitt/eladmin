@@ -2,6 +2,7 @@ package me.zhengjie.modules.keyuan.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.zhengjie.modules.keyuan.domain.config.SysProjectStatisticsConfig;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoiceTableRow;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoicedNotReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
@@ -10,6 +11,7 @@ import me.zhengjie.modules.keyuan.domain.statistics.balance.AccountBalanceData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceData;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceTableRow;
 import me.zhengjie.modules.keyuan.domain.statistics.balance.ProjectDepartment;
+import me.zhengjie.modules.keyuan.service.SysProjectConfigService;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
@@ -58,10 +60,15 @@ public class SysProjectStatisticsService {
 
     private final KingdeeService kingdeeService;
 
+    private final SysProjectConfigService sysProjectConfigService;
+
     public SysProjectStatistics getSysProjectStatisticsInfo(String contractYear, String receiveYear) {
         String key = contractYear + receiveYear;
         if (!SysProjectStatistics.CACHE_MAP.containsKey(key)) {
             SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
+            SysProjectStatisticsConfig sysProjectConfig = sysProjectConfigService.findConfigByKey(ProjectUtils.PROJECT_CONFIG_KEY_STATISTICS, SysProjectStatisticsConfig.class);
+            SysProjectDetailQueryCriteria criteria = new SysProjectDetailQueryCriteria();
+            criteria.setSalesPersonNotIn(new ArrayList<>(sysProjectConfig.getSalesPersonBlackList()));//剔除挂靠项目
             List<SysProjectDetailDto> sysProjectDetailDtoList = sysProjectDetailService.queryAll(new SysProjectDetailQueryCriteria());
             Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
             buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap, contractYear);
@@ -174,20 +181,20 @@ public class SysProjectStatisticsService {
                 personData[month] += receiveAmount;
                 personData[12] += receiveAmount;
 
-                Map<String, double[]> departmentMap = sysProjectStatistics.getReceiveByTypeAndDepartment().get(projectType);
-                fillDepartmentMap(departmentMap, detailDto, month, receiveAmount);
-
-                Map<String, double[]> personShareMap = sysProjectStatistics.getReceiveShareByTypeAndPerson().get(projectType);
-                double[] personShareData = personShareMap.computeIfAbsent(personName, k -> new double[13]);
-                personShareData[month] += receiveAmount * detailDto.getSalesPercent() / 100;
-                personShareData[12] += receiveAmount * detailDto.getSalesPercent() / 100;
-
-                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
-                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamReceiveByRegionAndPerson().get(detailDto.getProjectRegion());
-                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
-                    examPersonData[month] += receiveAmount;
-                    examPersonData[12] += receiveAmount;
-                }
+//                Map<String, double[]> departmentMap = sysProjectStatistics.getReceiveByTypeAndDepartment().get(projectType);
+//                fillDepartmentMap(departmentMap, detailDto, month, receiveAmount);
+//
+//                Map<String, double[]> personShareMap = sysProjectStatistics.getReceiveShareByTypeAndPerson().get(projectType);
+//                double[] personShareData = personShareMap.computeIfAbsent(personName, k -> new double[13]);
+//                personShareData[month] += receiveAmount * detailDto.getSalesPercent() / 100;
+//                personShareData[12] += receiveAmount * detailDto.getSalesPercent() / 100;
+//
+//                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
+//                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamReceiveByRegionAndPerson().get(detailDto.getProjectRegion());
+//                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
+//                    examPersonData[month] += receiveAmount;
+//                    examPersonData[12] += receiveAmount;
+//                }
             }
         }
     }

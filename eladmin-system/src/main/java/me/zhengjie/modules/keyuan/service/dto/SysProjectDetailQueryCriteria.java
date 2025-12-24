@@ -53,6 +53,9 @@ public class SysProjectDetailQueryCriteria {
     @Query
     private Long salesPerson;
 
+    @Query(type = Query.Type.NOT_IN, propName = "salesPerson")
+    private List<Long> salesPersonNotIn;
+
     @Query
     private Integer projectType;
 

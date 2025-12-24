@@ -50,13 +50,13 @@ public class SysProjectStatistics {
     Map<String, Map<String, double[]>> receiveByTypeAndPerson = ProjectUtils.generateTypeMap();
     List<TableOption> receiveByPersonTableList = new ArrayList<>();
 
-    Map<String, Map<String, double[]>> receiveByTypeAndDepartment = ProjectUtils.generateTypeMap();
-    List<TableOption> receiveByDepartmentTableList = new ArrayList<>();
-
-    Map<String, Map<String, double[]>> receiveShareByTypeAndPerson = ProjectUtils.generateTypeMap();
-    List<TableOption> receiveShareByPersonTableList = new ArrayList<>();
-    Map<String, Map<String, double[]>> examReceiveByRegionAndPerson = ProjectUtils.generateRegionMap();
-    List<TableOption> examReceiveByPersonTableList = new ArrayList<>();
+//    Map<String, Map<String, double[]>> receiveByTypeAndDepartment = ProjectUtils.generateTypeMap();
+//    List<TableOption> receiveByDepartmentTableList = new ArrayList<>();
+//
+//    Map<String, Map<String, double[]>> receiveShareByTypeAndPerson = ProjectUtils.generateTypeMap();
+//    List<TableOption> receiveShareByPersonTableList = new ArrayList<>();
+//    Map<String, Map<String, double[]>> examReceiveByRegionAndPerson = ProjectUtils.generateRegionMap();
+//    List<TableOption> examReceiveByPersonTableList = new ArrayList<>();
 
 
     public void calcInnerData(String contractYear, String receiveYear) {
@@ -67,9 +67,9 @@ public class SysProjectStatistics {
         buildOptionAndTotal(receiveByYearAndType, receiveChartOption, receiveTotalByType, "收款指标", receiveYear);
         buildTableFromMap(receiveByRegionTableList, receiveByTypeAndRegion, "地区");
         buildTableFromMap(receiveByPersonTableList, receiveByTypeAndPerson, "业务人");
-        buildTableFromMap(receiveByDepartmentTableList, receiveByTypeAndDepartment, "部门");
-        buildTableFromMap(receiveShareByPersonTableList, receiveShareByTypeAndPerson, "业务人");
-        buildTableFromMap(examReceiveByPersonTableList, examReceiveByRegionAndPerson, "业务人", ProjectUtils.PROJECT_EXAM_REGIONS);
+//        buildTableFromMap(receiveByDepartmentTableList, receiveByTypeAndDepartment, "部门");
+//        buildTableFromMap(receiveShareByPersonTableList, receiveShareByTypeAndPerson, "业务人");
+//        buildTableFromMap(examReceiveByPersonTableList, examReceiveByRegionAndPerson, "业务人", ProjectUtils.PROJECT_EXAM_REGIONS);
 
         clear();
     }
@@ -146,8 +146,8 @@ public class SysProjectStatistics {
         receiveByYearAndType.clear();
         receiveByTypeAndRegion.clear();
         receiveByTypeAndPerson.clear();
-        receiveByTypeAndDepartment.clear();
-        receiveShareByTypeAndPerson.clear();
-        examReceiveByRegionAndPerson.clear();
+//        receiveByTypeAndDepartment.clear();
+//        receiveShareByTypeAndPerson.clear();
+//        examReceiveByRegionAndPerson.clear();
     }
 }
