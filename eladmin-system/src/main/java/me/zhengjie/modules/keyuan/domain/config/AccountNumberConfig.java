@@ -7,11 +7,10 @@ import java.util.Set;
 
 @Data
 public class AccountNumberConfig {
+    private boolean autoTransactionEnable = false;
     private Map<String, Long> bankAccountMap;
     private Map<Integer, Map<String, Long>> typeAndRegionMap;
-    private Set<Long> personAccountNumberSet;
-    private Set<Long> bankAccountNumberSet;
-    private Set<Long> personWhiteList;
+    private Set<Long> projectBlackList;
     private String bankAccountPrefix;
     private String personAccountPrefix;
     private long initialTime = 0L;

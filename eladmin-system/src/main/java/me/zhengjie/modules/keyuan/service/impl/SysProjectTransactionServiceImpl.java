@@ -245,28 +245,28 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     @Override
     public void updateTransactionByReceive(SysProjectReceiveDto receive) {
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
-        if (receive.getReceiveTime().getTime() < accountNumberConfig.getInitialTime()) {
+        if (!accountNumberConfig.isAutoTransactionEnable() ||
+                receive.getReceiveTime().getTime() < accountNumberConfig.getInitialTime() ||
+                accountNumberConfig.getProjectBlackList().contains(receive.getProjectId())) {
             return;
         }
         SysProjectDetail detailDto = sysProjectDetailRepository.findById(receive.getProjectId()).orElse(new SysProjectDetail());
-        if (!accountNumberConfig.getPersonWhiteList().contains(detailDto.getSalesPerson())) {
+        if (detailDto.getProjectType().equals(ProjectUtils.PROJECT_TYPE_OTHER)) {//特殊项目手动录入
             return;
         }
-        long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
-        long otherAmount = (long) receive.getReceiveAmount() - personAmount;
-
         SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
         criteria.setProjectReceiveId(receive.getId());
         List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
+
         List<SysProjectTransaction> transactionList = new ArrayList<>();
         if (CollectionUtils.isEmpty(transactionDtoList)) {
-            SysProjectTransaction personTransaction = buildTransactionFromReceive(receive, detailDto, true);
-            SysProjectTransaction otherTransaction = buildTransactionFromReceive(receive, detailDto, false);
-            transactionList.add(personTransaction);
-            transactionList.add(otherTransaction);
+            transactionList.add(buildTransactionFromReceive(receive, detailDto, true));
+            transactionList.add(buildTransactionFromReceive(receive, detailDto, false));
         } else if (transactionDtoList.size() == 2) {
+            long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
+            long otherAmount = (long) receive.getReceiveAmount() - personAmount;
             for (SysProjectTransactionDto transactionDto : transactionDtoList) {
-                if (accountNumberConfig.getPersonAccountNumberSet().contains(transactionDto.getAccountNumber())) {
+                if (accountNumberConfig.isPersonAccount(transactionDto.getAccountNumber())) {
                     transactionDto.setAmount((int) personAmount);
                 } else {
                     transactionDto.setAmount((int) otherAmount);

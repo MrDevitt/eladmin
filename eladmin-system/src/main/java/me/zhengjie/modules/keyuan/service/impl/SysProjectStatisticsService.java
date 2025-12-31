@@ -67,9 +67,12 @@ public class SysProjectStatisticsService {
         if (!SysProjectStatistics.CACHE_MAP.containsKey(key)) {
             SysProjectStatistics sysProjectStatistics = new SysProjectStatistics();
             SysProjectStatisticsConfig sysProjectConfig = sysProjectConfigService.findConfigByKey(ProjectUtils.PROJECT_CONFIG_KEY_STATISTICS, SysProjectStatisticsConfig.class);
-            SysProjectDetailQueryCriteria criteria = new SysProjectDetailQueryCriteria();
-            criteria.setSalesPersonNotIn(new ArrayList<>(sysProjectConfig.getSalesPersonBlackList()));//剔除挂靠项目
             List<SysProjectDetailDto> sysProjectDetailDtoList = sysProjectDetailService.queryAll(new SysProjectDetailQueryCriteria());
+            List<SysProjectDetailDto> projectBlackList = sysProjectDetailDtoList
+                    .stream()
+                    .filter(e -> sysProjectConfig.getSalesPersonBlackList().contains(e.getSalesPerson()))
+                    .collect(Collectors.toList());
+            sysProjectDetailDtoList.removeAll(projectBlackList);
             Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
             buildContractStatistics(sysProjectStatistics, sysProjectDetailDtoList, sysProjectPersonDtoMap, contractYear);
 
@@ -78,7 +81,9 @@ public class SysProjectStatisticsService {
                     Function.identity(),
                     (x, y) -> x
             ));
-            List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(new SysProjectReceiveQueryCriteria());
+            SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
+            criteria.setProjectIdsNotIn(projectBlackList.stream().map(SysProjectDetailDto::getId).collect(Collectors.toList()));
+            List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(criteria);
             buildReceiveStatistics(sysProjectStatistics, sysProjectReceiveDtoList, sysProjectDetailDtoMap, sysProjectPersonDtoMap, receiveYear);
 
             sysProjectStatistics.calcInnerData(contractYear, receiveYear);

@@ -31,6 +31,9 @@ public class SysProjectReceiveQueryCriteria {
     @Query
     private Long projectId;
 
+    @Query(type = Query.Type.NOT_IN, propName = "projectId")
+    private List<Long> projectIdsNotIn;
+
     @Query(type = Query.Type.BETWEEN)
     private List<Timestamp> receiveTime;
 
