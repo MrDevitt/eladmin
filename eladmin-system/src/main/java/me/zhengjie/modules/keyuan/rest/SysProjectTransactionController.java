@@ -104,7 +104,7 @@ public class SysProjectTransactionController {
     @Log("查询科目余额表")
     @ApiOperation("查询科目余额表")
     @PreAuthorize("@el.check('sysProjectAccountSummay:list')")
-    public ResponseEntity<List<SummaryData>> querySysProjectTransaction(@RequestParam Timestamp begin, @RequestParam Timestamp end) {
-        return new ResponseEntity<>(sysProjectTransactionService.getTransactionSummary(begin, end), HttpStatus.OK);
+    public ResponseEntity<List<SummaryData>> querySysProjectTransaction(@RequestParam Timestamp begin, @RequestParam Timestamp end, @RequestParam(required = false) boolean person) {
+        return new ResponseEntity<>(sysProjectTransactionService.getTransactionSummary(begin, end, person), HttpStatus.OK);
     }
 }

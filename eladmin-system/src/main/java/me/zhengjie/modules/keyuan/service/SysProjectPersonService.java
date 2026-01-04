@@ -90,4 +90,6 @@ public interface SysProjectPersonService {
     void download(List<SysProjectPersonDto> all, HttpServletResponse response) throws IOException;
 
     Map<Long, SysProjectPersonDto> getIdToPersonMap();
+
+    Map<Long, SysProjectPersonDto> getAccountNumberToPersonMap();
 }

@@ -387,7 +387,7 @@ public class SysProjectStatisticsService {
                 receiveByPersonAndType.putIfAbsent(k, new HashMap<>());
             }
         });
-        Map<Long, Long> remainingByPerson = getPersonRemainingMap();
+        Map<Long, Long> remainingByPerson = sysProjectDetailService.getPersonRemainingMap();
         receiveByPersonAndType.forEach((k, v) -> {
             AccountBalanceData data = new AccountBalanceData();
             SysProjectPersonDto personDto = personMap.get(k);
@@ -432,17 +432,6 @@ public class SysProjectStatisticsService {
         row.setSumThisYear(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(sum2)));
         row.setInitialBalance(String.format("%.2f", ProjectUtils.dbPriceToRealPrice(expenseData.getInitialBalance())));
         return row;
-    }
-
-    public Map<Long, Long> getPersonRemainingMap() {
-        List<SysProjectDetailDto> detailDtoList = sysProjectDetailService.queryAll(new SysProjectDetailQueryCriteria());
-        Map<Long, Long> remainingByPerson = new HashMap<>();
-        for (SysProjectDetailDto dto : detailDtoList) {
-            long remaining = dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0);
-            remaining = remaining * dto.getSalesPercent() / 100;
-            remainingByPerson.put(dto.getSalesPerson(), remainingByPerson.getOrDefault(dto.getSalesPerson(), 0L) + Math.max(remaining, 0));
-        }
-        return remainingByPerson;
     }
 
     public Map<Long, Long> getBalancePersonMap() {

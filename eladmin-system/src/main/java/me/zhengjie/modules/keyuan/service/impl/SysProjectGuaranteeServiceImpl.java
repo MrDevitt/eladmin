@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import me.zhengjie.modules.keyuan.domain.SysGuaranteeData;
 import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
 import me.zhengjie.modules.keyuan.repository.SysProjectGuaranteeRepository;
+import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectGuaranteeService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
@@ -61,6 +62,8 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
     private final SysProjectPersonService sysProjectPersonService;
 
     private final SysProjectStatisticsService sysProjectStatisticsService;
+
+    private final SysProjectDetailService sysProjectDetailService;
 
 
     @Override
@@ -141,7 +144,7 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
             statusMap.put(dto.getStatus(), amount + dto.getGuaranteeAmount());
             statusMap.put(-1, totalAmount + dto.getGuaranteeAmount());
         }
-        Map<Long, Long> remainingByPerson = sysProjectStatisticsService.getPersonRemainingMap();
+        Map<Long, Long> remainingByPerson = sysProjectDetailService.getPersonRemainingMap();
         Map<Long, Long> balanceByPerson = sysProjectStatisticsService.getBalancePersonMap();
         List<Map<String, String>> tableData = new ArrayList<>();
         guaranteeByPersonAndStatus.forEach((k, v) -> {

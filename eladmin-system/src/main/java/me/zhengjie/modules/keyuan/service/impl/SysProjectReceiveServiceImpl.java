@@ -90,12 +90,12 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectReceive resources) {
-        sysProjectReceiveRepository.saveAndFlush(resources);//确保立即更新，保证updateReceiveAmount中读取到最新数据
-        updateReceiveAmount(resources.getProjectId());
-        SysProjectStatistics.CACHE_MAP.clear();
         if (resources.getReceiveAmount() > 0) {
             sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(resources));
         }
+        sysProjectReceiveRepository.saveAndFlush(resources);//确保立即更新，保证updateReceiveAmount中读取到最新数据
+        updateReceiveAmount(resources.getProjectId());
+        SysProjectStatistics.CACHE_MAP.clear();
     }
 
     @Override
@@ -104,14 +104,15 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         SysProjectReceive sysProjectReceive = sysProjectReceiveRepository.findById(resources.getId()).orElseGet(SysProjectReceive::new);
         ValidationUtil.isNull(sysProjectReceive.getId(), "SysProjectReceive", "id", resources.getId());
         sysProjectReceive.copy(resources);
+        sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive));
         sysProjectReceiveRepository.saveAndFlush(sysProjectReceive);//确保立即更新，保证updateReceiveAmount中读取到最新数据
         updateReceiveAmount(sysProjectReceive.getProjectId());
         SysProjectStatistics.CACHE_MAP.clear();
-        sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive));
     }
 
     @Override
     public void deleteAll(Long[] ids) {
+        sysProjectTransactionService.deleteTransactionByReceive(ids);
         Set<Long> projectIdSet = new HashSet<>();
         for (Long id : ids) {
             long projectId = sysProjectReceiveRepository.findById(id)
@@ -122,7 +123,6 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         }
         projectIdSet.forEach(this::updateReceiveAmount);
         SysProjectStatistics.CACHE_MAP.clear();
-        sysProjectTransactionService.deleteTransactionByReceive(ids);
     }
 
     @Override

@@ -90,4 +90,6 @@ public interface SysProjectDetailService {
     void download(List<SysProjectDetailDto> all, HttpServletResponse response) throws IOException;
 
     Map<Long, SysProjectDetailDto> getSysProjectDetailDtoMap();
+
+    Map<Long, Long> getPersonRemainingMap();
 }

@@ -48,10 +48,12 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -246,6 +248,18 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             ));
         }
         return sysProjectDetailDtoMap;
+    }
+
+    @Override
+    public Map<Long, Long> getPersonRemainingMap() {
+        List<SysProjectDetailDto> detailDtoList = queryAll(new SysProjectDetailQueryCriteria());
+        Map<Long, Long> remainingByPerson = new HashMap<>();
+        for (SysProjectDetailDto dto : detailDtoList) {
+            long remaining = dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0);
+            remaining = remaining * dto.getSalesPercent() / 100;
+            remainingByPerson.put(dto.getSalesPerson(), remainingByPerson.getOrDefault(dto.getSalesPerson(), 0L) + Math.max(remaining, 0));
+        }
+        return remainingByPerson;
     }
 
 }

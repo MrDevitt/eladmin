@@ -91,8 +91,8 @@ public interface SysProjectTransactionService {
      */
     void download(List<SysProjectTransactionDto> all, HttpServletResponse response) throws IOException;
 
-    List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end);
 
+    List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, boolean person);
 
     void updateTransactionByReceive(SysProjectReceiveDto receive);
 

@@ -27,6 +27,7 @@ import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
 import me.zhengjie.utils.QueryHelp;
 import me.zhengjie.utils.ValidationUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,7 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
     private final SysProjectPersonMapper sysProjectPersonMapper;
 
     private static Map<Long, SysProjectPersonDto> idToPersonMap = null;
+    private static Map<Long, SysProjectPersonDto> accountNumberToPersonMap = null;
 
     @Override
     public PageResult<SysProjectPersonDto> queryAll(SysProjectPersonQueryCriteria criteria, Pageable pageable) {
@@ -125,6 +127,19 @@ public class SysProjectPersonServiceImpl implements SysProjectPersonService {
             ));
         }
         return idToPersonMap;
+    }
+
+    @Override
+    public Map<Long, SysProjectPersonDto> getAccountNumberToPersonMap() {
+        if (accountNumberToPersonMap == null) {
+            List<SysProjectPersonDto> sysProjectPersonDtoList = queryAll(new SysProjectPersonQueryCriteria());
+            accountNumberToPersonMap = sysProjectPersonDtoList.stream().collect(Collectors.toMap(
+                    e -> StringUtils.isBlank(e.getAccountNumber()) ? -1L : Long.parseLong(e.getAccountNumber()),
+                    Function.identity(),
+                    (x, y) -> x
+            ));
+        }
+        return accountNumberToPersonMap;
     }
 
 }

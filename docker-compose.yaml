@@ -1,15 +1,15 @@
 services:
   web:
-    image: eladmin-web:2.7.1
+    image: eladmin-web:2.9.4-darwin
     networks:
       eladmin-net:
     ports:
-      - 80:80
+      - 443:443
     depends_on:
       - server
 
   server:
-    image: eladmin-server:2.7.1
+    image: eladmin-server:2.9.4-darwin
     ports:
       - 8000:8000
     networks:

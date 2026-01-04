@@ -29,6 +29,7 @@ import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountQueryCriteria;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionQueryCriteria;
@@ -55,6 +56,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -162,10 +164,13 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     }
 
     @Override
-    public List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end) {
+    public List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, boolean person) {
         List<SysProjectAccountDto> accountDtoList = sysProjectAccountService.queryAll(new SysProjectAccountQueryCriteria());
-        List<SysProjectAccountDto> topAccountList = accountDtoList.stream().filter(accountDto -> accountDto.getParent() == null).collect(Collectors.toList());
-        Map<Long, SummaryData> summaryMap = calcSummaryMap(begin, end);
+        List<SysProjectAccountDto> topAccountList = accountDtoList
+                .stream()
+                .filter(accountDto -> person ? accountDto.getAccountNumber().equals(getAccountNumberConfig().getPersonTopAccount()) : accountDto.getParent() == null)
+                .collect(Collectors.toList());
+        Map<Long, SummaryData> summaryMap = calcSummaryMap(begin, end, person);
         Map<Long, List<SysProjectAccountDto>> childrenMap = calcChildrenMap(accountDtoList);
         return topAccountList
                 .stream()
@@ -174,13 +179,36 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     }
 
     //科目余额统计，无父子关系，无初始余额
-    private Map<Long, SummaryData> calcSummaryMap(Timestamp begin, Timestamp end) {
+    private Map<Long, SummaryData> calcSummaryMap(Timestamp begin, Timestamp end, boolean person) {
+        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
         criteria.setTransactionTime(List.of(new Timestamp(0), end));
         List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
         Map<Long, SummaryData> summaryMap = new HashMap<>();
         summaryMap.putAll(buildMap(begin, transactionDtoList, false));
         summaryMap.putAll(buildMap(begin, transactionDtoList, true));
+        if (person) {
+            Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getAccountNumberToPersonMap();
+            //重复代码，待优化依赖关系
+            List<SysProjectDetail> detailList = sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, null, criteriaBuilder));
+            Map<Long, Long> remainingByPerson = new HashMap<>();
+            for (SysProjectDetail detail : detailList) {
+                long remaining = detail.getContractAmount() - Optional.ofNullable(detail.getReceiveAmount()).orElse(0);
+                remaining = remaining * detail.getSalesPercent() / 100;
+                remainingByPerson.put(detail.getSalesPerson(), remainingByPerson.getOrDefault(detail.getSalesPerson(), 0L) + Math.max(remaining, 0));
+            }
+            summaryMap.forEach((k, v) -> {
+                if (!accountNumberConfig.isPersonAccount(k)) {
+                    return;
+                }
+                SysProjectPersonDto salesPerson = personMap.get(k);
+                if (salesPerson == null) {
+                    log.error("科目编号对应业务人员不存在：{}", k);
+                    return;
+                }
+                v.setRemainingShare(remainingByPerson.getOrDefault(salesPerson.getId(), -100L));
+            });
+        }
         return summaryMap;
     }
 
@@ -250,7 +278,10 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                 accountNumberConfig.getProjectBlackList().contains(receive.getProjectId())) {
             return;
         }
-        SysProjectDetail detailDto = sysProjectDetailRepository.findById(receive.getProjectId()).orElse(new SysProjectDetail());
+        SysProjectDetail detailDto = sysProjectDetailRepository.findById(receive.getProjectId()).orElse(null);
+        if (detailDto == null) {
+            throw new RuntimeException("项目不存在,receiveId=" + receive.getId() + " projectId=" + receive.getProjectId());
+        }
         if (detailDto.getProjectType().equals(ProjectUtils.PROJECT_TYPE_OTHER)) {//特殊项目手动录入
             return;
         }
@@ -286,12 +317,30 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
         long amount = person ? personAmount : (long) receive.getReceiveAmount() - personAmount;
-        Long accountNumber = person ?
-                Long.parseLong(sysProjectPersonService.findById(detailDto.getSalesPerson()).getAccountNumber()) :
-                accountNumberConfig.getTypeAndRegionMap().get(detailDto.getProjectType()).get(detailDto.getProjectRegion());
+        Long accountNumber;
+        if (person) {
+            String str = sysProjectPersonService.findById(detailDto.getSalesPerson()).getAccountNumber();
+            if (str == null) {
+                throw new RuntimeException("person accountNumber不存在, person=" + detailDto.getSalesPerson());
+            }
+            accountNumber = Long.parseLong(str);
+        } else {
+            Map<String, Long> regionMap = accountNumberConfig.getTypeAndRegionMap().get(detailDto.getProjectType());
+            if (regionMap == null) {
+                throw new RuntimeException("regionMap不存在, type=" + detailDto.getProjectType());
+            }
+            accountNumber = regionMap.get(detailDto.getProjectRegion());
+            if (accountNumber == null) {
+                throw new RuntimeException("region accountNumber不存在, region=" + detailDto.getProjectRegion());
+            }
+        }
+        Long bankNumber = accountNumberConfig.getBankAccountMap().get(detailDto.getPartyA());
+        if (bankNumber == null) {
+            throw new RuntimeException("partyA bankNumber不存在, partyA=" + detailDto.getPartyA());
+        }
+        transaction.setBankNumber(bankNumber);
         String comment = person ? "-业务人收款-" : "-公司收款-";
         transaction.setAccountNumber(accountNumber);
-        transaction.setBankNumber(accountNumberConfig.getBankAccountMap().get(detailDto.getPartyB()));
         checkChildren(transaction);
         transaction.setAmount((int) amount);
         transaction.setTransactionTime(receive.getReceiveTime());
