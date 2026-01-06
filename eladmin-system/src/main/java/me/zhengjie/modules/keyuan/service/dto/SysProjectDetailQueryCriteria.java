@@ -97,4 +97,10 @@ public class SysProjectDetailQueryCriteria {
 
     @Query(type = Query.Type.INNER_LIKE)
     private String partyA;
+
+
+    public SysProjectDetailQueryCriteria salesPerson(Long salesPerson) {
+        this.salesPerson = salesPerson;
+        return this;
+    }
 }

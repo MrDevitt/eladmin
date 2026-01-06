@@ -287,59 +287,101 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         }
         SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
         criteria.setProjectReceiveId(receive.getId());
-        List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
+        long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
+        long otherAmount = (long) receive.getReceiveAmount() - personAmount;
 
+        List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
         List<SysProjectTransaction> transactionList = new ArrayList<>();
-        if (CollectionUtils.isEmpty(transactionDtoList)) {
-            transactionList.add(buildTransactionFromReceive(receive, detailDto, true));
-            transactionList.add(buildTransactionFromReceive(receive, detailDto, false));
-        } else if (transactionDtoList.size() == 2) {
-            long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
-            long otherAmount = (long) receive.getReceiveAmount() - personAmount;
-            for (SysProjectTransactionDto transactionDto : transactionDtoList) {
-                if (accountNumberConfig.isPersonAccount(transactionDto.getAccountNumber())) {
-                    transactionDto.setAmount((int) personAmount);
-                } else {
-                    transactionDto.setAmount((int) otherAmount);
+        if (detailDto.getProjectType().equals(ProjectUtils.PROJECT_TYPE_EXAM) &&
+                accountNumberConfig.getBranchRegionSet().contains(detailDto.getProjectRegion())) {//检测分公司
+            long hqAmount = (long) receive.getReceiveAmount() * detailDto.getManagementPercent() / 100;
+            long branchAmount = otherAmount - hqAmount;
+            if (CollectionUtils.isEmpty(transactionDtoList)) {
+                Long personAccountNumber = getPersonAccountNumber(detailDto);
+                transactionList.add(buildTransactionFromReceive(receive, detailDto, personAmount, personAccountNumber, "-业务人收款-"));
+
+                Long branchAccountNumber = getCompanyAccountNumber(detailDto);
+                transactionList.add(buildTransactionFromReceive(receive, detailDto, branchAmount, branchAccountNumber, "-分公司收款-"));
+
+                transactionList.add(buildTransactionFromReceive(receive, detailDto, hqAmount, accountNumberConfig.getHqAccountNumber(), "-总公司收款-"));
+            } else if (transactionDtoList.size() == 3) {
+                for (SysProjectTransactionDto transactionDto : transactionDtoList) {
+                    if (accountNumberConfig.isPersonAccount(transactionDto.getAccountNumber())) {
+                        transactionDto.setAmount((int) personAmount);
+                    } else if (transactionDto.getAccountNumber().equals(accountNumberConfig.getHqAccountNumber())) {
+                        transactionDto.setAmount((int) hqAmount);
+                    } else {
+                        transactionDto.setAmount((int) branchAmount);
+                    }
+                    transactionDto.setTransactionTime(receive.getReceiveTime());
+                    transactionDto.setUpdateBy("系统");
                 }
-                transactionDto.setTransactionTime(receive.getReceiveTime());
-                transactionDto.setUpdateBy("系统");
+                transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
+            } else {
+                throw new RuntimeException("收款生成交易数据异常，receiveId=" + receive.getId());
             }
-            transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
         } else {
-            throw new RuntimeException("收款生成交易数据异常，receiveId=" + receive.getId());
+            if (CollectionUtils.isEmpty(transactionDtoList)) {
+                Long personAccountNumber = getPersonAccountNumber(detailDto);
+                transactionList.add(buildTransactionFromReceive(receive, detailDto, personAmount, personAccountNumber, "业务人收款"));
+
+                Long otherAccountNumber = getCompanyAccountNumber(detailDto);
+                transactionList.add(buildTransactionFromReceive(receive, detailDto, otherAmount, otherAccountNumber, "公司收款"));
+            } else if (transactionDtoList.size() == 2) {
+                for (SysProjectTransactionDto transactionDto : transactionDtoList) {
+                    if (accountNumberConfig.isPersonAccount(transactionDto.getAccountNumber())) {
+                        transactionDto.setAmount((int) personAmount);
+                    } else {
+                        transactionDto.setAmount((int) otherAmount);
+                    }
+                    transactionDto.setTransactionTime(receive.getReceiveTime());
+                    transactionDto.setUpdateBy("系统");
+                }
+                transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
+            } else {
+                throw new RuntimeException("收款生成交易数据异常，receiveId=" + receive.getId());
+            }
         }
         sysProjectTransactionRepository.saveAll(transactionList);
     }
 
-    private SysProjectTransaction buildTransactionFromReceive(SysProjectReceiveDto receive, SysProjectDetail detailDto, boolean person) {
+    private Long getPersonAccountNumber(SysProjectDetail detailDto) {
+        SysProjectPersonDto personDto = sysProjectPersonService.findById(detailDto.getSalesPerson());
+        if (personDto == null) {
+            throw new RuntimeException("业务人不存在, projectId=" + detailDto.getId());
+        }
+        String personAccountNumber = personDto.getAccountNumber();
+        if (personAccountNumber == null) {
+            throw new RuntimeException("person accountNumber不存在, person=" + detailDto.getSalesPerson());
+        }
+        return Long.parseLong(personAccountNumber);
+    }
+
+    private Long getCompanyAccountNumber(SysProjectDetail detailDto) {
+        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+        Map<String, Long> regionMap = accountNumberConfig.getTypeAndRegionMap().get(detailDto.getProjectType());
+        if (regionMap == null) {
+            throw new RuntimeException("regionMap不存在, type=" + detailDto.getProjectType());
+        }
+        Long accountNumber = regionMap.get(detailDto.getProjectRegion());
+        if (accountNumber == null) {
+            throw new RuntimeException("region accountNumber不存在, region=" + detailDto.getProjectRegion());
+        }
+        return accountNumber;
+    }
+
+    private SysProjectTransaction buildTransactionFromReceive(SysProjectReceiveDto receive,
+                                                              SysProjectDetail detailDto,
+                                                              long amount,
+                                                              long accountNumber,
+                                                              String comment) {
         SysProjectTransaction transaction = new SysProjectTransaction();
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
-        long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
-        long amount = person ? personAmount : (long) receive.getReceiveAmount() - personAmount;
-        Long accountNumber;
-        if (person) {
-            String str = sysProjectPersonService.findById(detailDto.getSalesPerson()).getAccountNumber();
-            if (str == null) {
-                throw new RuntimeException("person accountNumber不存在, person=" + detailDto.getSalesPerson());
-            }
-            accountNumber = Long.parseLong(str);
-        } else {
-            Map<String, Long> regionMap = accountNumberConfig.getTypeAndRegionMap().get(detailDto.getProjectType());
-            if (regionMap == null) {
-                throw new RuntimeException("regionMap不存在, type=" + detailDto.getProjectType());
-            }
-            accountNumber = regionMap.get(detailDto.getProjectRegion());
-            if (accountNumber == null) {
-                throw new RuntimeException("region accountNumber不存在, region=" + detailDto.getProjectRegion());
-            }
-        }
         Long bankNumber = accountNumberConfig.getBankAccountMap().get(detailDto.getPartyA());
         if (bankNumber == null) {
             throw new RuntimeException("partyA bankNumber不存在, partyA=" + detailDto.getPartyA());
         }
         transaction.setBankNumber(bankNumber);
-        String comment = person ? "-业务人收款-" : "-公司收款-";
         transaction.setAccountNumber(accountNumber);
         checkChildren(transaction);
         transaction.setAmount((int) amount);

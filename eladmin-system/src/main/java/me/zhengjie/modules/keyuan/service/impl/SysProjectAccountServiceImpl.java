@@ -22,6 +22,7 @@ import me.zhengjie.modules.keyuan.service.SysProjectAccountService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectAccountMapper;
+import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
@@ -60,6 +61,9 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
 
     @Override
     public PageResult<SysProjectAccountDto> queryAll(SysProjectAccountQueryCriteria criteria, Pageable pageable) {
+        if (ProjectUtils.allFieldsNull(criteria)) {
+            criteria.setNullParent(true);
+        }
         Page<SysProjectAccount> page = sysProjectAccountRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder), pageable);
         return PageUtil.toPage(page.map(sysProjectAccountMapper::toDto));
     }
@@ -81,7 +85,18 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectAccount resources) {
         checkPrefix(resources);
+        if (resources.getParent() != null) {
+            SysProjectAccount parent = sysProjectAccountRepository.findById(resources.getParent()).orElse(null);
+            if (parent == null) {
+                throw new RuntimeException("父科目不存在,请检查后重新修改！");
+            }
+            if (!parent.getHasChildren()) {
+                parent.setHasChildren(true);
+                sysProjectAccountRepository.save(parent);
+            }
+        }
         resources.setCreateBy(SecurityUtils.getCurrentUsername());
+        resources.setHasChildren(false);
         sysProjectAccountRepository.save(resources);
     }
 

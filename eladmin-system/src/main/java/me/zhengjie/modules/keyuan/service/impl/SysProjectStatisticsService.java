@@ -81,6 +81,7 @@ public class SysProjectStatisticsService {
                     Function.identity(),
                     (x, y) -> x
             ));
+
             SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
             criteria.setProjectIdsNotIn(projectBlackList.stream().map(SysProjectDetailDto::getId).collect(Collectors.toList()));
             List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(criteria);
@@ -186,20 +187,6 @@ public class SysProjectStatisticsService {
                 personData[month] += receiveAmount;
                 personData[12] += receiveAmount;
 
-//                Map<String, double[]> departmentMap = sysProjectStatistics.getReceiveByTypeAndDepartment().get(projectType);
-//                fillDepartmentMap(departmentMap, detailDto, month, receiveAmount);
-//
-//                Map<String, double[]> personShareMap = sysProjectStatistics.getReceiveShareByTypeAndPerson().get(projectType);
-//                double[] personShareData = personShareMap.computeIfAbsent(personName, k -> new double[13]);
-//                personShareData[month] += receiveAmount * detailDto.getSalesPercent() / 100;
-//                personShareData[12] += receiveAmount * detailDto.getSalesPercent() / 100;
-//
-//                if (detailDto.getProjectType() == ProjectUtils.PROJECT_TYPE_EXAM) {
-//                    Map<String, double[]> examRegionMap = sysProjectStatistics.getExamReceiveByRegionAndPerson().get(detailDto.getProjectRegion());
-//                    double[] examPersonData = examRegionMap.computeIfAbsent(personName, k -> new double[13]);
-//                    examPersonData[month] += receiveAmount;
-//                    examPersonData[12] += receiveAmount;
-//                }
             }
         }
     }

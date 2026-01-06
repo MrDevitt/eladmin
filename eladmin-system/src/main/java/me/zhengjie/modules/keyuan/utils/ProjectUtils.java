@@ -4,6 +4,7 @@ import me.zhengjie.modules.keyuan.domain.statistics.balance.ProjectDepartment;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -219,5 +220,29 @@ public class ProjectUtils {
 
     public static double roundFix2(double num) {
         return ((double) Math.round(num * 100)) / 100;
+    }
+
+    public static boolean allFieldsNull(Object obj) {
+        if (obj == null) {
+            return true; // 对象本身为null
+        }
+
+        Class<?> clazz = obj.getClass();
+        while (clazz != null) {
+            for (Field field : clazz.getDeclaredFields()) {
+                field.setAccessible(true); // 允许访问私有字段
+                try {
+                    Object value = field.get(obj);
+                    if (value != null) {
+                        return false; // 找到非空字段
+                    }
+                } catch (IllegalAccessException e) {
+                    // 忽略不可访问字段，或记录日志
+                    continue;
+                }
+            }
+            clazz = clazz.getSuperclass(); // 检查父类字段
+        }
+        return true; // 所有字段都为空
     }
 }

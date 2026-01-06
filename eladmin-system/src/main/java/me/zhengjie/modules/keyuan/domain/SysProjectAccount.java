@@ -61,6 +61,11 @@ public class SysProjectAccount implements Serializable {
     @ApiModelProperty(value = "初始余额")
     private Integer initialAmount;
 
+    @Column(name = "`has_children`", nullable = false)
+    @NotNull
+    @ApiModelProperty(value = "有子节点")
+    private Boolean hasChildren;
+
     @Column(name = "`create_by`")
     @ApiModelProperty(value = "创建人")
     private String createBy;

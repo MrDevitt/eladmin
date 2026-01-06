@@ -48,4 +48,7 @@ public class SysProjectAccountQueryCriteria {
 
     @Query(type = Query.Type.IN, propName = "parent")
     private List<Long> parents;
+
+    @Query(type = Query.Type.IS_NULL, propName = "parent")
+    private Boolean nullParent;
 }
