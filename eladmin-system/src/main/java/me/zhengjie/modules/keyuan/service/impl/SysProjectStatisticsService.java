@@ -24,7 +24,6 @@ import me.zhengjie.modules.keyuan.utils.CalendarUtils;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import me.zhengjie.utils.FileUtil;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -367,29 +366,29 @@ public class SysProjectStatisticsService {
         }
         List<BalanceTableRow> departmentRows = new ArrayList<>();
         Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getIdToPersonMap();
-        personMap.forEach((k, v) -> {
-            if (v.getInitialBalance() != null ||
-                    StringUtils.isNotEmpty(v.getAccountNumber()) ||
-                    StringUtils.isNotEmpty(v.getReserveFundNumber())) {
-                receiveByPersonAndType.putIfAbsent(k, new HashMap<>());
-            }
-        });
-        Map<Long, Long> remainingByPerson = sysProjectDetailService.getPersonRemainingMap();
-        receiveByPersonAndType.forEach((k, v) -> {
-            AccountBalanceData data = new AccountBalanceData();
-            SysProjectPersonDto personDto = personMap.get(k);
-            if (StringUtils.isNotEmpty(personDto.getReserveFundNumber()) || StringUtils.isNotEmpty(personDto.getAccountNumber())) {
-                int month = CalendarUtils.getBeginningOfMonth(end).get(Calendar.MONTH) + 1;
-                AccountBalanceData accountData = kingdeeService.getAccountBalanceByNumber(personDto.getAccountNumber(), month);
-                AccountBalanceData reserveFundData = kingdeeService.getAccountBalanceByNumber(personDto.getReserveFundNumber(), month);
-                data = AccountBalanceData.add(accountData, reserveFundData);
-            }
-            Optional.ofNullable(personDto.getInitialBalance()).ifPresent(data::setInitialBalance);
-            BalanceTableRow row = typeMapToRow(v, data);
-            row.setName(personMap.get(k).getName());
-            row.setRemaining(ProjectUtils.dbPriceToRealPriceString(remainingByPerson.getOrDefault(k, 0L)));
-            departmentRows.add(row);
-        });
+//        personMap.forEach((k, v) -> {
+//            if (v.getInitialBalance() != null ||
+//                    StringUtils.isNotEmpty(v.getAccountNumber()) ||
+//                    StringUtils.isNotEmpty(v.getReserveFundNumber())) {
+//                receiveByPersonAndType.putIfAbsent(k, new HashMap<>());
+//            }
+//        });
+//        Map<Long, Long> remainingByPerson = sysProjectDetailService.getPersonRemainingMap();
+//        receiveByPersonAndType.forEach((k, v) -> {
+//            AccountBalanceData data = new AccountBalanceData();
+//            SysProjectPersonDto personDto = personMap.get(k);
+//            if (StringUtils.isNotEmpty(personDto.getReserveFundNumber()) || StringUtils.isNotEmpty(personDto.getAccountNumber())) {
+//                int month = CalendarUtils.getBeginningOfMonth(end).get(Calendar.MONTH) + 1;
+//                AccountBalanceData accountData = kingdeeService.getAccountBalanceByNumber(personDto.getAccountNumber(), month);
+//                AccountBalanceData reserveFundData = kingdeeService.getAccountBalanceByNumber(personDto.getReserveFundNumber(), month);
+//                data = AccountBalanceData.add(accountData, reserveFundData);
+//            }
+//            Optional.ofNullable(personDto.getInitialBalance()).ifPresent(data::setInitialBalance);
+//            BalanceTableRow row = typeMapToRow(v, data);
+//            row.setName(personMap.get(k).getName());
+//            row.setRemaining(ProjectUtils.dbPriceToRealPriceString(remainingByPerson.getOrDefault(k, 0L)));
+//            departmentRows.add(row);
+//        });
         departmentRows.sort(BalanceTableRow.COMPARATOR_DESC);
         return departmentRows;
     }
@@ -434,14 +433,14 @@ public class SysProjectStatisticsService {
             long person = detail.getSalesPerson();
             personBalanceMap.put(person, personBalanceMap.getOrDefault(person, 0L) + salesAmount);
         }
-        Map<Long, SysProjectPersonDto> personDtoMap = sysProjectPersonService.getIdToPersonMap();
-        for (Map.Entry<Long, Long> entry : personBalanceMap.entrySet()) {
-            SysProjectPersonDto personDto = personDtoMap.get(entry.getKey());
-            AccountBalanceData data = kingdeeService.getAccountBalanceByNumberList(List.of(
-                    Optional.ofNullable(personDto.getAccountNumber()).orElse(""),
-                    Optional.ofNullable(personDto.getReserveFundNumber()).orElse("")), Calendar.getInstance().get(Calendar.MONTH) + 1);
-            entry.setValue(entry.getValue() - data.getExpenseThisYear() + Optional.ofNullable(personDto.getInitialBalance()).orElse(0));
-        }
+//        Map<Long, SysProjectPersonDto> personDtoMap = sysProjectPersonService.getIdToPersonMap();
+//        for (Map.Entry<Long, Long> entry : personBalanceMap.entrySet()) {
+//            SysProjectPersonDto personDto = personDtoMap.get(entry.getKey());
+//            AccountBalanceData data = kingdeeService.getAccountBalanceByNumberList(List.of(
+//                    Optional.ofNullable(personDto.getAccountNumber()).orElse(""),
+//                    Optional.ofNullable(personDto.getReserveFundNumber()).orElse("")), Calendar.getInstance().get(Calendar.MONTH) + 1);
+//            entry.setValue(entry.getValue() - data.getExpenseThisYear() + Optional.ofNullable(personDto.getInitialBalance()).orElse(0));
+//        }
         return personBalanceMap;
     }
 

@@ -54,15 +54,5 @@ public class SysProjectPersonDto implements Serializable {
     /**
      * 开销科目编号
      */
-    private String accountNumber;
-
-    /**
-     * 备用金科目编号
-     */
-    private String reserveFundNumber;
-
-    /**
-     * 上年结转余额
-     */
-    private Integer initialBalance;
+    private Long accountNumber;
 }

@@ -19,6 +19,7 @@ public class SummaryData {
     private long endExpense;
     private long endRemain;
     private long remainingShare;
+    private long guaranteeAmount;
     private List<SummaryData> children;
 
     public SummaryData add(SummaryData other) {
@@ -30,6 +31,7 @@ public class SummaryData {
         this.endIncome += other.endIncome;
         this.endExpense += other.endExpense;
         this.remainingShare += other.remainingShare;
+        this.guaranteeAmount += other.guaranteeAmount;
         return this;
     }
 

@@ -73,5 +73,5 @@ public class SysProjectAccountDto implements Serializable {
      */
     private Timestamp updateTime;
 
-    private Boolean hasChildren = true;//TODO 暂时默认true用于懒加载，后续优化
+    private Boolean hasChildren;
 }

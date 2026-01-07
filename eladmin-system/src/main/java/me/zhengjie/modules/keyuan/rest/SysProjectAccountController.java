@@ -15,6 +15,8 @@
  */
 package me.zhengjie.modules.keyuan.rest;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,7 +25,6 @@ import me.zhengjie.annotation.Log;
 import me.zhengjie.modules.keyuan.domain.SysProjectAccount;
 import me.zhengjie.modules.keyuan.service.SysProjectAccountService;
 import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
-import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionQueryCriteria;
 import me.zhengjie.utils.PageResult;
@@ -71,8 +72,15 @@ public class SysProjectAccountController {
     @Log("查询项目科目信息")
     @ApiOperation("查询项目科目信息")
     @PreAuthorize("@el.check('sysProjectAccount:list')")
-    public ResponseEntity<PageResult<SysProjectAccountDto>> querySysProjectAccount(SysProjectAccountQueryCriteria criteria, Pageable pageable) {
-        return new ResponseEntity<>(sysProjectAccountService.queryAll(criteria, pageable), HttpStatus.OK);
+    public ResponseEntity<PageResult<JSONObject>> querySysProjectAccount(SysProjectAccountQueryCriteria criteria, Pageable pageable) {
+        PageResult<JSONObject> ret = sysProjectAccountService.queryAll(criteria, pageable).map(e -> {
+            JSONObject o = JSON.parseObject(JSON.toJSONString(e));
+            o.put("value", e.getAccountNumber());
+            o.put("label", e.getAccountNumber() + "-" + e.getDescription());
+            o.put("leaf", !e.getHasChildren());
+            return o;
+        });
+        return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
     @PostMapping

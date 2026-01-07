@@ -18,10 +18,12 @@ package me.zhengjie.modules.keyuan.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
+import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
 import me.zhengjie.modules.keyuan.domain.SysProjectTransaction;
 import me.zhengjie.modules.keyuan.domain.config.AccountNumberConfig;
 import me.zhengjie.modules.keyuan.domain.statistics.transaction.SummaryData;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
+import me.zhengjie.modules.keyuan.repository.SysProjectGuaranteeRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectTransactionRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectAccountService;
 import me.zhengjie.modules.keyuan.service.SysProjectConfigService;
@@ -29,6 +31,8 @@ import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectAccountQueryCriteria;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionDto;
@@ -81,6 +85,8 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
 
     private final SysProjectPersonService sysProjectPersonService;
 
+    private final SysProjectGuaranteeRepository sysProjectGuaranteeRepository;
+
     @Override
     public PageResult<SysProjectTransactionDto> queryAll(SysProjectTransactionQueryCriteria criteria, Pageable pageable) {
         updateQueryCriteria(criteria);
@@ -111,12 +117,16 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectTransaction resources) {
-        checkChildren(resources);
+        checkTransaction(resources);
         resources.setCreateBy(SecurityUtils.getCurrentUsername());
         sysProjectTransactionRepository.save(resources);
     }
 
-    private void checkChildren(SysProjectTransaction resources) {
+    private void checkTransaction(SysProjectTransaction resources) {
+        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+        if (!accountNumberConfig.isBankAccount(resources.getBankNumber())) {
+            throw new RuntimeException("科目" + resources.getBankNumber() + "不是银行科目！");
+        }
         SysProjectAccountQueryCriteria criteria = new SysProjectAccountQueryCriteria();
         criteria.setParents(List.of(resources.getAccountNumber(), resources.getBankNumber()));
         if (CollectionUtils.isNotEmpty(sysProjectAccountService.queryAll(criteria))) {
@@ -129,7 +139,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     public void update(SysProjectTransaction resources) {
         SysProjectTransaction sysProjectTransaction = sysProjectTransactionRepository.findById(resources.getId()).orElseGet(SysProjectTransaction::new);
         ValidationUtil.isNull(sysProjectTransaction.getId(), "SysProjectTransaction", "id", resources.getId());
-        checkChildren(resources);
+        checkTransaction(resources);
         sysProjectTransaction.copy(resources);
         sysProjectTransaction.setUpdateBy(SecurityUtils.getCurrentUsername());
         sysProjectTransactionRepository.save(sysProjectTransaction);
@@ -189,7 +199,13 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         summaryMap.putAll(buildMap(begin, transactionDtoList, true));
         if (person) {
             Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getAccountNumberToPersonMap();
-            //重复代码，待优化依赖关系
+            personMap.forEach((k, v) -> {
+                if (summaryMap.containsKey(k)) {
+                    return;
+                }
+                summaryMap.put(k, new SummaryData());//保证业务人数据
+            });
+            //计算提成余额，重复代码，待优化依赖关系
             List<SysProjectDetail> detailList = sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, null, criteriaBuilder));
             Map<Long, Long> remainingByPerson = new HashMap<>();
             for (SysProjectDetail detail : detailList) {
@@ -197,6 +213,16 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                 remaining = remaining * detail.getSalesPercent() / 100;
                 remainingByPerson.put(detail.getSalesPerson(), remainingByPerson.getOrDefault(detail.getSalesPerson(), 0L) + Math.max(remaining, 0));
             }
+            //获取担保金额
+            SysProjectGuaranteeQueryCriteria guaranteeCriteria = new SysProjectGuaranteeQueryCriteria();
+            guaranteeCriteria.setStatus(List.of(SysProjectGuaranteeDto.STATUS_NORMAL, SysProjectGuaranteeDto.STATUS_ABNORMAL));
+            List<SysProjectGuarantee> guaranteeList = sysProjectGuaranteeRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, guaranteeCriteria, criteriaBuilder));
+            Map<Long, Long> guaranteeByPerson = new HashMap<>();
+            for (SysProjectGuarantee guarantee : guaranteeList) {
+                long amount = (long) guarantee.getGuaranteeAmount();
+                guaranteeByPerson.put(guarantee.getGuaranteePerson(), guaranteeByPerson.getOrDefault(guarantee.getGuaranteePerson(), 0L) + amount);
+            }
+
             summaryMap.forEach((k, v) -> {
                 if (!accountNumberConfig.isPersonAccount(k)) {
                     return;
@@ -206,7 +232,8 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                     log.error("科目编号对应业务人员不存在：{}", k);
                     return;
                 }
-                v.setRemainingShare(remainingByPerson.getOrDefault(salesPerson.getId(), -100L));
+                v.setRemainingShare(remainingByPerson.getOrDefault(salesPerson.getId(), 0L));
+                v.setGuaranteeAmount(guaranteeByPerson.getOrDefault(salesPerson.getId(), 0L));
             });
         }
         return summaryMap;
@@ -282,7 +309,8 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         if (detailDto == null) {
             throw new RuntimeException("项目不存在,receiveId=" + receive.getId() + " projectId=" + receive.getProjectId());
         }
-        if (detailDto.getProjectType().equals(ProjectUtils.PROJECT_TYPE_OTHER)) {//特殊项目手动录入
+        if (detailDto.getProjectType().equals(ProjectUtils.PROJECT_TYPE_OTHER) ||
+                accountNumberConfig.getPartyBBlackList().contains(detailDto.getPartyB())) {//特殊项目、特殊账户手动录入
             return;
         }
         SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
@@ -350,11 +378,11 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         if (personDto == null) {
             throw new RuntimeException("业务人不存在, projectId=" + detailDto.getId());
         }
-        String personAccountNumber = personDto.getAccountNumber();
+        Long personAccountNumber = personDto.getAccountNumber();
         if (personAccountNumber == null) {
             throw new RuntimeException("person accountNumber不存在, person=" + detailDto.getSalesPerson());
         }
-        return Long.parseLong(personAccountNumber);
+        return personAccountNumber;
     }
 
     private Long getCompanyAccountNumber(SysProjectDetail detailDto) {
@@ -383,7 +411,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         }
         transaction.setBankNumber(bankNumber);
         transaction.setAccountNumber(accountNumber);
-        checkChildren(transaction);
+        checkTransaction(transaction);
         transaction.setAmount((int) amount);
         transaction.setTransactionTime(receive.getReceiveTime());
         transaction.setComment(detailDto.getProjectName() + comment + receive.getId());
