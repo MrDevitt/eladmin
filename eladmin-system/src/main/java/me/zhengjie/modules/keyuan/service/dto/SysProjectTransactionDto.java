@@ -42,7 +42,7 @@ public class SysProjectTransactionDto implements Serializable {
     /**
      * 金额
      */
-    private Integer amount;
+    private Long amount;
 
     /**
      * 交易类型

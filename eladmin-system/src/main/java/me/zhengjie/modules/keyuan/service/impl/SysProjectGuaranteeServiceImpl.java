@@ -136,11 +136,11 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
         criteria.setStatus(List.of(SysProjectGuaranteeDto.STATUS_NORMAL, SysProjectGuaranteeDto.STATUS_ABNORMAL));
         List<SysProjectGuaranteeDto> dtoList = queryAll(criteria);
         Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getIdToPersonMap();
-        Map<Long, Map<Integer, Integer>> guaranteeByPersonAndStatus = new HashMap<>();
+        Map<Long, Map<Integer, Long>> guaranteeByPersonAndStatus = new HashMap<>();
         for (SysProjectGuaranteeDto dto : dtoList) {
-            Map<Integer, Integer> statusMap = guaranteeByPersonAndStatus.computeIfAbsent(dto.getGuaranteePerson(), k -> new HashMap<>());
-            Integer amount = statusMap.computeIfAbsent(dto.getStatus(), k -> 0);
-            Integer totalAmount = statusMap.computeIfAbsent(-1, k -> 0);
+            Map<Integer, Long> statusMap = guaranteeByPersonAndStatus.computeIfAbsent(dto.getGuaranteePerson(), k -> new HashMap<>());
+            Long amount = statusMap.computeIfAbsent(dto.getStatus(), k -> 0L);
+            Long totalAmount = statusMap.computeIfAbsent(-1, k -> 0L);
             statusMap.put(dto.getStatus(), amount + dto.getGuaranteeAmount());
             statusMap.put(-1, totalAmount + dto.getGuaranteeAmount());
         }
@@ -150,10 +150,10 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
         guaranteeByPersonAndStatus.forEach((k, v) -> {
             Map<String, String> data = new HashMap<>();
             data.put("name", personMap.get(k).getName());
-            data.put("normal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0))));
-            data.put("abnormal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0))));
-            data.put("sum", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(-1, 0))));
-            long remaining = remainingByPerson.getOrDefault(k, 0L) + balanceByPerson.getOrDefault(k, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0);
+            data.put("normal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0L))));
+            data.put("abnormal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0L))));
+            data.put("sum", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(-1, 0L))));
+            long remaining = remainingByPerson.getOrDefault(k, 0L) + balanceByPerson.getOrDefault(k, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0L);
             data.put("remaining", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(remaining)));
             tableData.add(data);
         });

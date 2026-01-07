@@ -58,7 +58,7 @@ public class SysProjectTransaction implements Serializable {
     @Column(name = "`amount`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "金额")
-    private Integer amount;
+    private Long amount;
 
     @Column(name = "`direction`", nullable = false)
     @NotNull

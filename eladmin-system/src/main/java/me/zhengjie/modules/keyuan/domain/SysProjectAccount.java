@@ -59,7 +59,7 @@ public class SysProjectAccount implements Serializable {
     @Column(name = "`initial_amount`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "初始余额")
-    private Integer initialAmount;
+    private Long initialAmount;
 
     @Column(name = "`has_children`", nullable = false)
     @NotNull

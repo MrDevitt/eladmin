@@ -209,7 +209,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
             List<SysProjectDetail> detailList = sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, null, criteriaBuilder));
             Map<Long, Long> remainingByPerson = new HashMap<>();
             for (SysProjectDetail detail : detailList) {
-                long remaining = detail.getContractAmount() - Optional.ofNullable(detail.getReceiveAmount()).orElse(0);
+                long remaining = detail.getContractAmount() - Optional.ofNullable(detail.getReceiveAmount()).orElse(0L);
                 remaining = remaining * detail.getSalesPercent() / 100;
                 remainingByPerson.put(detail.getSalesPerson(), remainingByPerson.getOrDefault(detail.getSalesPerson(), 0L) + Math.max(remaining, 0));
             }
@@ -219,7 +219,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
             List<SysProjectGuarantee> guaranteeList = sysProjectGuaranteeRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, guaranteeCriteria, criteriaBuilder));
             Map<Long, Long> guaranteeByPerson = new HashMap<>();
             for (SysProjectGuarantee guarantee : guaranteeList) {
-                long amount = (long) guarantee.getGuaranteeAmount();
+                long amount = guarantee.getGuaranteeAmount();
                 guaranteeByPerson.put(guarantee.getGuaranteePerson(), guaranteeByPerson.getOrDefault(guarantee.getGuaranteePerson(), 0L) + amount);
             }
 
@@ -244,7 +244,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         for (SysProjectTransactionDto transactionDto : transactionDtoList) {
             Long key = bank ? transactionDto.getBankNumber() : transactionDto.getAccountNumber();
             SummaryData summary = summaryMap.computeIfAbsent(key, k -> new SummaryData());
-            Integer amount = transactionDto.getAmount();
+            Long amount = transactionDto.getAmount();
             if (transactionDto.getTransactionTime().before(begin)) {
                 if (transactionDto.getDirection() == ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME) {
                     summary.setBeginIncome(summary.getBeginIncome() + amount);
@@ -298,7 +298,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     }
 
     @Override
-    public void updateTransactionByReceive(SysProjectReceiveDto receive) {
+    public void updateTransactionByReceive(SysProjectReceiveDto receive, boolean create) {
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         if (!accountNumberConfig.isAutoTransactionEnable() ||
                 receive.getReceiveTime().getTime() < accountNumberConfig.getInitialTime() ||
@@ -313,16 +313,20 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                 accountNumberConfig.getPartyBBlackList().contains(detailDto.getPartyB())) {//特殊项目、特殊账户手动录入
             return;
         }
-        SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
-        criteria.setProjectReceiveId(receive.getId());
-        long personAmount = (long) receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
-        long otherAmount = (long) receive.getReceiveAmount() - personAmount;
 
-        List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
+        long personAmount = receive.getReceiveAmount() * detailDto.getSalesPercent() / 100;
+        long otherAmount = receive.getReceiveAmount() - personAmount;
+
+        List<SysProjectTransactionDto> transactionDtoList = new ArrayList<>();
+        if (!create) {
+            SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
+            criteria.setProjectReceiveId(receive.getId());
+            transactionDtoList = queryAll(criteria);
+        }
         List<SysProjectTransaction> transactionList = new ArrayList<>();
         if (detailDto.getProjectType().equals(ProjectUtils.PROJECT_TYPE_EXAM) &&
                 accountNumberConfig.getBranchRegionSet().contains(detailDto.getProjectRegion())) {//检测分公司
-            long hqAmount = (long) receive.getReceiveAmount() * detailDto.getManagementPercent() / 100;
+            long hqAmount = receive.getReceiveAmount() * detailDto.getManagementPercent() / 100;
             long branchAmount = otherAmount - hqAmount;
             if (CollectionUtils.isEmpty(transactionDtoList)) {
                 Long personAccountNumber = getPersonAccountNumber(detailDto);
@@ -335,11 +339,11 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
             } else if (transactionDtoList.size() == 3) {
                 for (SysProjectTransactionDto transactionDto : transactionDtoList) {
                     if (accountNumberConfig.isPersonAccount(transactionDto.getAccountNumber())) {
-                        transactionDto.setAmount((int) personAmount);
+                        transactionDto.setAmount(personAmount);
                     } else if (transactionDto.getAccountNumber().equals(accountNumberConfig.getHqAccountNumber())) {
-                        transactionDto.setAmount((int) hqAmount);
+                        transactionDto.setAmount(hqAmount);
                     } else {
-                        transactionDto.setAmount((int) branchAmount);
+                        transactionDto.setAmount(branchAmount);
                     }
                     transactionDto.setTransactionTime(receive.getReceiveTime());
                     transactionDto.setUpdateBy("系统");
@@ -358,9 +362,9 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
             } else if (transactionDtoList.size() == 2) {
                 for (SysProjectTransactionDto transactionDto : transactionDtoList) {
                     if (accountNumberConfig.isPersonAccount(transactionDto.getAccountNumber())) {
-                        transactionDto.setAmount((int) personAmount);
+                        transactionDto.setAmount(personAmount);
                     } else {
-                        transactionDto.setAmount((int) otherAmount);
+                        transactionDto.setAmount(otherAmount);
                     }
                     transactionDto.setTransactionTime(receive.getReceiveTime());
                     transactionDto.setUpdateBy("系统");
@@ -405,14 +409,14 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                                                               String comment) {
         SysProjectTransaction transaction = new SysProjectTransaction();
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
-        Long bankNumber = accountNumberConfig.getBankAccountMap().get(detailDto.getPartyA());
+        Long bankNumber = accountNumberConfig.getBankAccountMap().get(detailDto.getPartyB());
         if (bankNumber == null) {
-            throw new RuntimeException("partyA bankNumber不存在, partyA=" + detailDto.getPartyA());
+            throw new RuntimeException("partyB bankNumber不存在, partyB=" + detailDto.getPartyB());
         }
         transaction.setBankNumber(bankNumber);
         transaction.setAccountNumber(accountNumber);
         checkTransaction(transaction);
-        transaction.setAmount((int) amount);
+        transaction.setAmount(amount);
         transaction.setTransactionTime(receive.getReceiveTime());
         transaction.setComment(detailDto.getProjectName() + comment + receive.getId());
         transaction.setCertificateNumber(detailDto.getContractNumber() + "-" + receive.getId());

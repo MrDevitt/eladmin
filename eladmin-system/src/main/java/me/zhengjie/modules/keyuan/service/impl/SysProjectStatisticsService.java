@@ -215,8 +215,8 @@ public class SysProjectStatisticsService {
             long currentAmount = shouldReceiveByType.computeIfAbsent(dto.getProjectType(), k -> 0L);
             long totalAmount = shouldReceiveByType.computeIfAbsent(-1, k -> 0L);
             long toAdd = shouldReceive ?
-                    Optional.ofNullable(dto.getShouldReceiveAmount()).orElse(0) :
-                    dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0);
+                    Optional.ofNullable(dto.getShouldReceiveAmount()).orElse(0L) :
+                    dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0L);
             shouldReceiveByType.put(dto.getProjectType(), currentAmount + Math.max(toAdd, 0));
             shouldReceiveByType.put(-1, totalAmount + Math.max(toAdd, 0));
         }
@@ -246,8 +246,8 @@ public class SysProjectStatisticsService {
             int year = calendar.get(Calendar.YEAR);
             long[] amountArray = yearMap.computeIfAbsent(year, k -> new long[2]);
             long[] amountTotalArray = yearMap.computeIfAbsent(-1, k -> new long[2]);
-            long receiveAmount = Optional.ofNullable(detailDto.getReceiveAmount()).orElse(0);
-            long shouldReceiveAmount = Optional.ofNullable(detailDto.getShouldReceiveAmount()).orElse(0);
+            long receiveAmount = Optional.ofNullable(detailDto.getReceiveAmount()).orElse(0L);
+            long shouldReceiveAmount = Optional.ofNullable(detailDto.getShouldReceiveAmount()).orElse(0L);
             amountArray[0] += receiveAmount;
             amountArray[1] += shouldReceive ? receiveAmount + shouldReceiveAmount : Math.max(receiveAmount, detailDto.getContractAmount());
             amountTotalArray[0] += receiveAmount;
@@ -298,12 +298,12 @@ public class SysProjectStatisticsService {
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
             SysProjectDetailDto detail = detailMap.computeIfAbsent(receiveDto.getProjectId(), sysProjectDetailService::findById);
             int projectType = detail.getProjectType();
-            int receiveAmount = receiveDto.getReceiveAmount();
+            long receiveAmount = receiveDto.getReceiveAmount();
             String region = detail.getProjectRegion();
 
             for (ProjectDepartment department : departmentList) {
                 int percent = department.getPercentageGetter().apply(detail);
-                long amount = (long) receiveAmount * percent / 100;
+                long amount = receiveAmount * percent / 100;
                 long[] amounts = department.getReceiveByType().computeIfAbsent(projectType, k -> new long[]{0, 0, 0});
                 Map<String, long[]> regionMap = department.getReceiveByTypeAndRegion().computeIfAbsent(projectType, k -> new HashMap<>());
                 long[] regionAmounts = regionMap.computeIfAbsent(region, k -> new long[]{0, 0, 0});
@@ -352,7 +352,7 @@ public class SysProjectStatisticsService {
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
             SysProjectDetailDto detail = detailMap.computeIfAbsent(receiveDto.getProjectId(), sysProjectDetailService::findById);
             int projectType = detail.getProjectType();
-            int receiveAmount = receiveDto.getReceiveAmount();
+            long receiveAmount = receiveDto.getReceiveAmount();
             //用long防止乘后int溢出
             long salesAmount = (long) receiveAmount * detail.getSalesPercent() / 100;
             Map<Integer, long[]> typeMap = receiveByPersonAndType.computeIfAbsent(detail.getSalesPerson(), k -> new HashMap<>());
@@ -428,8 +428,8 @@ public class SysProjectStatisticsService {
         Map<Long, SysProjectDetailDto> detailMap = new HashMap<>();
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
             SysProjectDetailDto detail = detailMap.computeIfAbsent(receiveDto.getProjectId(), sysProjectDetailService::findById);
-            int receiveAmount = receiveDto.getReceiveAmount();
-            long salesAmount = (long) receiveAmount * detail.getSalesPercent() / 100;
+            long receiveAmount = receiveDto.getReceiveAmount();
+            long salesAmount = receiveAmount * detail.getSalesPercent() / 100;
             long person = detail.getSalesPerson();
             personBalanceMap.put(person, personBalanceMap.getOrDefault(person, 0L) + salesAmount);
         }
@@ -454,20 +454,20 @@ public class SysProjectStatisticsService {
         receiveQueryCriteria.setInvoiceAmount(0);
         List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryAll(receiveQueryCriteria);
         Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailService.getSysProjectDetailDtoMap();
-        Map<String, int[]> invoiceByCompanyMap = new TreeMap<>();
+        Map<String, long[]> invoiceByCompanyMap = new TreeMap<>();
 
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
             SysProjectDetailDto projectDetailDto = sysProjectDetailDtoMap.get(receiveDto.getProjectId());
             String company = projectDetailDto.getPartyB();
-            int[] data = invoiceByCompanyMap.computeIfAbsent(company, k -> new int[]{0, 0});
+            long[] data = invoiceByCompanyMap.computeIfAbsent(company, k -> new long[]{0, 0});
             data[0] += receiveDto.getInvoiceAmount();
 
         }
         sysProjectDetailDtoMap.forEach((k, v) -> {
             String company = v.getPartyB();
-            int[] data = invoiceByCompanyMap.computeIfAbsent(company, k1 -> new int[]{0, 0});
+            long[] data = invoiceByCompanyMap.computeIfAbsent(company, k1 -> new long[]{0, 0});
             if (v.getInvoiceType() != ProjectUtils.INVOICE_TYPE_NONE) {
-                data[1] += Optional.ofNullable(v.getShouldReceiveAmount()).orElse(0);
+                data[1] += Optional.ofNullable(v.getShouldReceiveAmount()).orElse(0L);
             }
         });
 
@@ -491,12 +491,12 @@ public class SysProjectStatisticsService {
         List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryInvoicedNotReceive();
         Map<Long, SysProjectDetailDto> sysProjectDetailDtoMap = sysProjectDetailService.getSysProjectDetailDtoMap();
         Map<Long, SysProjectPersonDto> sysProjectPersonDtoMap = sysProjectPersonService.getIdToPersonMap();
-        Map<String, Integer> personMap = new HashMap<>();
+        Map<String, Long> personMap = new HashMap<>();
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
-            int amount = receiveDto.getInvoiceAmount() - receiveDto.getReceiveAmount();
+            long amount = receiveDto.getInvoiceAmount() - receiveDto.getReceiveAmount();
             long projectId = receiveDto.getProjectId();
             String name = sysProjectPersonDtoMap.get(sysProjectDetailDtoMap.get(projectId).getSalesPerson()).getName();
-            personMap.put(name, personMap.getOrDefault(name, 0) + amount);
+            personMap.put(name, personMap.getOrDefault(name, 0L) + amount);
         }
         List<InvoicedNotReceiveData.Row> rows = new ArrayList<>();
         personMap.forEach((k, v) -> {

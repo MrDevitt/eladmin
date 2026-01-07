@@ -57,7 +57,7 @@ public class SysProjectReceive implements Serializable {
     @Column(name = "`invoice_amount`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "开票金额")
-    private Integer invoiceAmount;
+    private Long invoiceAmount;
 
     @Column(name = "`invoice_time`", nullable = false)
     @NotNull
@@ -67,7 +67,7 @@ public class SysProjectReceive implements Serializable {
     @Column(name = "`receive_amount`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "到账金额")
-    private Integer receiveAmount;
+    private Long receiveAmount;
 
     @Column(name = "`receive_time`", nullable = false)
     @NotNull

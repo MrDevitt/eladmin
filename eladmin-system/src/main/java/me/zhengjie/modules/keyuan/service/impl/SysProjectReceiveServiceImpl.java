@@ -90,10 +90,10 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectReceive resources) {
-        if (resources.getReceiveAmount() > 0) {
-            sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(resources));
+        SysProjectReceive saved = sysProjectReceiveRepository.saveAndFlush(resources);//确保立即更新，保证updateReceiveAmount中读取到最新数据
+        if (saved.getReceiveAmount() > 0L) {//返回值才会有Id
+            sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(saved), true);
         }
-        sysProjectReceiveRepository.saveAndFlush(resources);//确保立即更新，保证updateReceiveAmount中读取到最新数据
         updateReceiveAmount(resources.getProjectId());
         SysProjectStatistics.CACHE_MAP.clear();
     }
@@ -104,7 +104,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         SysProjectReceive sysProjectReceive = sysProjectReceiveRepository.findById(resources.getId()).orElseGet(SysProjectReceive::new);
         ValidationUtil.isNull(sysProjectReceive.getId(), "SysProjectReceive", "id", resources.getId());
         sysProjectReceive.copy(resources);
-        sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive));
+        sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive), false);
         sysProjectReceiveRepository.saveAndFlush(sysProjectReceive);//确保立即更新，保证updateReceiveAmount中读取到最新数据
         updateReceiveAmount(sysProjectReceive.getProjectId());
         SysProjectStatistics.CACHE_MAP.clear();
@@ -150,7 +150,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
         criteria.setProjectId(projectId);
         List<SysProjectReceiveDto> receiveDtoList = queryAll(criteria);
-        int totalReceive = receiveDtoList.stream().mapToInt(SysProjectReceiveDto::getReceiveAmount).sum();
+        long totalReceive = receiveDtoList.stream().mapToLong(SysProjectReceiveDto::getReceiveAmount).sum();
         sysProjectDetail.setReceiveAmount(totalReceive);
         sysProjectDetailRepository.save(sysProjectDetail);
     }

@@ -51,4 +51,8 @@ public class SysProjectAccountQueryCriteria {
 
     @Query(type = Query.Type.IS_NULL, propName = "parent")
     private Boolean nullParent;
+
+
+    @Query
+    private Boolean hasChildren;
 }

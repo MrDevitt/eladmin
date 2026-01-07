@@ -59,7 +59,7 @@ public class SysProjectDetailTask {
         try {
             List<SysProjectDetailDto> sysProjectDetailDtoList = sysProjectDetailService.queryAll(new SysProjectDetailQueryCriteria());
             for (SysProjectDetailDto sysProjectDetailDto : sysProjectDetailDtoList) {
-                int shouldReceiveAmount = (int) calcShouldReceiveAmount(sysProjectDetailDto);
+                long shouldReceiveAmount = calcShouldReceiveAmount(sysProjectDetailDto);
                 if (sysProjectDetailDto.getShouldReceiveAmount() == null ||
                         sysProjectDetailDto.getShouldReceiveAmount() != shouldReceiveAmount) {
                     sysProjectDetailDto.setShouldReceiveAmount(shouldReceiveAmount);
@@ -115,7 +115,7 @@ public class SysProjectDetailTask {
             default:
                 throw new RuntimeException("invalid contractPayWay, projectId=" + sysProjectDetailDto.getId());
         }
-        int receive = sysProjectDetailDto.getReceiveAmount() == null ? 0 : sysProjectDetailDto.getReceiveAmount();
+        long receive = sysProjectDetailDto.getReceiveAmount() == null ? 0 : sysProjectDetailDto.getReceiveAmount();
         return Math.max(shouldPay - receive, 0);
     }
 
@@ -163,11 +163,11 @@ public class SysProjectDetailTask {
         //检查收款不一致
         StringBuilder receiveErrorIds = new StringBuilder();
         for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
-            int amount = 0;
+            long amount = 0;
             for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoMap.getOrDefault(detailDto.getId(), List.of())) {
                 amount += receiveDto.getReceiveAmount();
             }
-            if (Optional.ofNullable(detailDto.getReceiveAmount()).orElse(0) != amount) {
+            if (Optional.ofNullable(detailDto.getReceiveAmount()).orElse(0L) != amount) {
                 receiveErrorIds.append(detailDto.getId()).append(",");
             }
         }
@@ -178,7 +178,7 @@ public class SysProjectDetailTask {
         //检查收款大于合同金额
         StringBuilder contractErrorIds = new StringBuilder();
         for (SysProjectDetailDto detailDto : sysProjectDetailDtoList) {
-            if (Optional.ofNullable(detailDto.getReceiveAmount()).orElse(0) > detailDto.getContractAmount()) {
+            if (Optional.ofNullable(detailDto.getReceiveAmount()).orElse(0L) > detailDto.getContractAmount()) {
                 contractErrorIds.append(detailDto.getId()).append(",");
             }
         }
@@ -252,7 +252,7 @@ public class SysProjectDetailTask {
         criteria.setReceiveAmount(0);
         List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(criteria);
         for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoList) {
-            sysProjectTransactionService.updateTransactionByReceive(receiveDto);
+            sysProjectTransactionService.updateTransactionByReceive(receiveDto, false);
         }
     }
 }

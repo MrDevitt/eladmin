@@ -51,7 +51,7 @@ public class SysProjectAccountDto implements Serializable {
     /**
      * 初始余额
      */
-    private Integer initialAmount;
+    private Long initialAmount;
 
     /**
      * 创建人

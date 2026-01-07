@@ -48,8 +48,10 @@ public class SysProjectDetailDto implements Serializable {
     /** 合同编号 */
     private String contractNumber;
 
-    /** 合同金额 */
-    private Integer contractAmount;
+    /**
+     * 合同金额
+     */
+    private Long contractAmount;
 
     /** 业务人员 */
     private Long salesPerson;
@@ -78,7 +80,7 @@ public class SysProjectDetailDto implements Serializable {
     /**
      * 收款金额
      */
-    private Integer receiveAmount;
+    private Long receiveAmount;
 
     /**
      * 记录创建的时间
@@ -106,7 +108,7 @@ public class SysProjectDetailDto implements Serializable {
     /**
      * 应收款金额
      */
-    private Integer shouldReceiveAmount;
+    private Long shouldReceiveAmount;
 
     /**
      * 项目进度

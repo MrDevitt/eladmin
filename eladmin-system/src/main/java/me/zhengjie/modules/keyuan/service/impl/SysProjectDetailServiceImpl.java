@@ -166,7 +166,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         if (sysProjectDetailRepository.findByContractNumber(resources.getContractNumber()) != null) {
             throw new EntityExistException(SysProjectDetail.class, "contract_number", resources.getContractNumber());
         }
-        resources.setReceiveAmount(0);//防止为null后影响未收款筛选
+        resources.setReceiveAmount(0L);//防止为null后影响未收款筛选
         sysProjectDetailRepository.save(resources);
         SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;
@@ -255,7 +255,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         List<SysProjectDetailDto> detailDtoList = queryAll(new SysProjectDetailQueryCriteria());
         Map<Long, Long> remainingByPerson = new HashMap<>();
         for (SysProjectDetailDto dto : detailDtoList) {
-            long remaining = dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0);
+            long remaining = dto.getContractAmount() - Optional.ofNullable(dto.getReceiveAmount()).orElse(0L);
             remaining = remaining * dto.getSalesPercent() / 100;
             remainingByPerson.put(dto.getSalesPerson(), remainingByPerson.getOrDefault(dto.getSalesPerson(), 0L) + Math.max(remaining, 0));
         }

@@ -39,7 +39,7 @@ public class SysProjectReceiveDto implements Serializable {
     /**
      * 开票金额
      */
-    private Integer invoiceAmount;
+    private Long invoiceAmount;
 
     /**
      * 开票时间
@@ -49,7 +49,7 @@ public class SysProjectReceiveDto implements Serializable {
     /**
      * 到账金额
      */
-    private Integer receiveAmount;
+    private Long receiveAmount;
 
     /**
      * 到账时间

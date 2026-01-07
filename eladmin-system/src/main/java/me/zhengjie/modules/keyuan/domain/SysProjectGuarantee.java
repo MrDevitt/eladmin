@@ -77,7 +77,7 @@ public class SysProjectGuarantee implements Serializable {
     @Column(name = "`guarantee_amount`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "担保金额")
-    private Integer guaranteeAmount;
+    private Long guaranteeAmount;
 
     @Column(name = "`guarantee_time`", nullable = false)
     @NotNull

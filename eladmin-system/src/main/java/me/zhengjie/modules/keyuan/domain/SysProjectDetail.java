@@ -80,7 +80,7 @@ public class SysProjectDetail implements Serializable {
     @Column(name = "`contract_amount`", nullable = false)
     @NotNull
     @ApiModelProperty(value = "合同金额")
-    private Integer contractAmount;
+    private Long contractAmount;
 
     @Column(name = "`sales_person`", nullable = false)
     @NotNull
@@ -122,7 +122,7 @@ public class SysProjectDetail implements Serializable {
 
     @Column(name = "`receive_amount`")
     @ApiModelProperty(value = "收款金额")
-    private Integer receiveAmount;
+    private Long receiveAmount;
 
     @Column(name = "`create_time`")
     @CreationTimestamp

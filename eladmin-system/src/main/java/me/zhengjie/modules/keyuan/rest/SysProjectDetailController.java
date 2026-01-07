@@ -86,12 +86,12 @@ public class SysProjectDetailController {
     @ApiOperation("查询开票未收款项目明细")
     @PreAuthorize("@el.check('sysProjectDetail:list')")
     public ResponseEntity<PageResult<JSONObject>> queryInvoicedNotReceiveDetail(SysProjectDetailQueryCriteria criteria, Pageable pageable) {
-        Map<Long, Integer> invoicedNotReceiveMap = new HashMap<>();
+        Map<Long, Long> invoicedNotReceiveMap = new HashMap<>();
         List<SysProjectReceiveDto> receiveDtoList = sysProjectReceiveService.queryInvoicedNotReceive();
         for (SysProjectReceiveDto receiveDto : receiveDtoList) {
-            int amount = receiveDto.getInvoiceAmount() - receiveDto.getReceiveAmount();
+            long amount = receiveDto.getInvoiceAmount() - receiveDto.getReceiveAmount();
             long projectId = receiveDto.getProjectId();
-            invoicedNotReceiveMap.put(projectId, invoicedNotReceiveMap.getOrDefault(projectId, 0) + amount);
+            invoicedNotReceiveMap.put(projectId, invoicedNotReceiveMap.getOrDefault(projectId, 0L) + amount);
         }
         List<Long> ids = receiveDtoList.stream().map(SysProjectReceiveDto::getProjectId).collect(Collectors.toList());
         criteria.setIds(ids);

@@ -94,7 +94,7 @@ public interface SysProjectTransactionService {
 
     List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, boolean person);
 
-    void updateTransactionByReceive(SysProjectReceiveDto receive);
+    void updateTransactionByReceive(SysProjectReceiveDto receive, boolean create);
 
     void deleteTransactionByReceive(Long[] receiveIds);
 }

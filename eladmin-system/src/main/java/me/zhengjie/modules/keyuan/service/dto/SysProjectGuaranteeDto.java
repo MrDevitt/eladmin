@@ -63,7 +63,7 @@ public class SysProjectGuaranteeDto implements Serializable {
     /**
      * 担保金额
      */
-    private Integer guaranteeAmount;
+    private Long guaranteeAmount;
 
     /**
      * 担保结束时间
