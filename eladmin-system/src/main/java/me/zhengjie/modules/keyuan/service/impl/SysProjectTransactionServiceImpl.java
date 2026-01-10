@@ -346,7 +346,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                         transactionDto.setAmount(branchAmount);
                     }
                     transactionDto.setTransactionTime(receive.getReceiveTime());
-                    transactionDto.setUpdateBy("系统");
+                    transactionDto.setUpdateBy(SecurityUtils.getCurrentUsername());
                 }
                 transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
             } else {
@@ -422,7 +422,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         transaction.setCertificateNumber(detailDto.getContractNumber() + "-" + receive.getId());
         transaction.setDirection(ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME);
         transaction.setProjectReceiveId(receive.getId());
-        transaction.setCreateBy("系统");
+        transaction.setCreateBy(SecurityUtils.getCurrentUsername());
         return transaction;
     }
 

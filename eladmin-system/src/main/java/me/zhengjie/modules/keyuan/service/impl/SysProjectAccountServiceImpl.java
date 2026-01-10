@@ -76,7 +76,10 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
     @Override
     @Transactional
     public SysProjectAccountDto findById(Long accountNumber) {
-        SysProjectAccount sysProjectAccount = sysProjectAccountRepository.findById(accountNumber).orElseGet(SysProjectAccount::new);
+        SysProjectAccount sysProjectAccount = sysProjectAccountRepository.findById(accountNumber).orElse(null);
+        if (sysProjectAccount == null) {
+            return null;
+        }
         ValidationUtil.isNull(sysProjectAccount.getAccountNumber(), "SysProjectAccount", "accountNumber", accountNumber);
         return sysProjectAccountMapper.toDto(sysProjectAccount);
     }
@@ -85,6 +88,9 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectAccount resources) {
         checkPrefix(resources);
+        if (findById(resources.getAccountNumber()) != null) {
+            throw new RuntimeException("该科目编号已存在,请检查后重新修改！");
+        }
         if (resources.getParent() != null) {
             SysProjectAccount parent = sysProjectAccountRepository.findById(resources.getParent()).orElse(null);
             if (parent == null) {
