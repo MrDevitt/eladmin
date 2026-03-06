@@ -33,6 +33,7 @@ public class ProjectUtils {
     public static final String[] PROJECT_GUARANTEE_STATUS = new String[]{"担保中", "担保逾期", "担保完成", "设计等待资金", "设计待签合同", "设计终止"};
     public static final String[] PROJECT_INVOICE_NAMES = new String[]{"专票", "普票", "无票"};
     public static final String[] PROJECT_EXAM_REGIONS = new String[]{"日喀则", "拉萨", "阿里", "那曲"};
+    public static final String[] PROJECT_TRANSACTION_DIRECTIONS = new String[]{"收入", "支出"};
     public static final String PROJECT_DEPARTMENT_PRESIDENT = "总裁办";
     public static final String PROJECT_DEPARTMENT_MANAGEMENT = "管理中心";
     public static final String PROJECT_DEPARTMENT_SALES = "业务中心";

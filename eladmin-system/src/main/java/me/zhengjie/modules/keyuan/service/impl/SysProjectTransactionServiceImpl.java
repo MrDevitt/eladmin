@@ -103,6 +103,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
 
     @Override
     public List<SysProjectTransactionDto> queryAll(SysProjectTransactionQueryCriteria criteria) {
+        updateQueryCriteria(criteria);
         return sysProjectTransactionMapper.toDto(sysProjectTransactionRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder)));
     }
 
@@ -149,6 +150,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     public void deleteAll(Long[] ids) {
         for (Long id : ids) {
             sysProjectTransactionRepository.deleteById(id);
+            SysProjectTransactionDto dto = findById(id);
         }
     }
 
@@ -158,10 +160,10 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         for (SysProjectTransactionDto sysProjectTransaction : all) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("摘要", sysProjectTransaction.getComment());
-            map.put("金额", sysProjectTransaction.getAmount());
-            map.put("交易类型", sysProjectTransaction.getDirection());
-            map.put("科目编号（关联业务人、部门）", sysProjectTransaction.getAccountNumber());
-            map.put("银行账号编号（关联银行账户）", sysProjectTransaction.getBankNumber());
+            map.put("金额", ProjectUtils.dbPriceToRealPrice(sysProjectTransaction.getAmount()));
+            map.put("交易类型", ProjectUtils.PROJECT_TRANSACTION_DIRECTIONS[sysProjectTransaction.getDirection()]);
+            map.put("科目编号（关联业务人、部门）", String.valueOf(sysProjectTransaction.getAccountNumber()));
+            map.put("银行账号编号（关联银行账户）", String.valueOf(sysProjectTransaction.getBankNumber()));
             map.put("记账凭证编号", sysProjectTransaction.getCertificateNumber());
             map.put("交易时间", sysProjectTransaction.getTransactionTime());
             map.put("创建人", sysProjectTransaction.getCreateBy());
@@ -248,10 +250,10 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
             if (transactionDto.getTransactionTime().before(begin)) {
                 if (transactionDto.getDirection() == ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME) {
                     summary.setBeginIncome(summary.getBeginIncome() + amount);
-                    summary.setEndIncome(summary.getBeginIncome() + amount);
+                    summary.setEndIncome(summary.getEndIncome() + amount);
                 } else {
                     summary.setBeginExpense(summary.getBeginExpense() + amount);
-                    summary.setEndExpense(summary.getBeginExpense() + amount);
+                    summary.setEndExpense(summary.getEndExpense() + amount);
                 }
             } else {
                 if (transactionDto.getDirection() == ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME) {
