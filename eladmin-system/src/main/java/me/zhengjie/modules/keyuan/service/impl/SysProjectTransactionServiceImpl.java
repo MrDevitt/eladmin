@@ -61,6 +61,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -150,20 +151,29 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     public void deleteAll(Long[] ids) {
         for (Long id : ids) {
             sysProjectTransactionRepository.deleteById(id);
-            SysProjectTransactionDto dto = findById(id);
         }
     }
 
     @Override
     public void download(List<SysProjectTransactionDto> all, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
+        Map<Long, SysProjectAccountDto> accountDtoMap = sysProjectAccountService.queryAll(new SysProjectAccountQueryCriteria())
+                .stream().collect(Collectors.toMap(
+                        SysProjectAccountDto::getAccountNumber,
+                        Function.identity(),
+                        (x, y) -> x
+                ));
         for (SysProjectTransactionDto sysProjectTransaction : all) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("摘要", sysProjectTransaction.getComment());
             map.put("金额", ProjectUtils.dbPriceToRealPrice(sysProjectTransaction.getAmount()));
             map.put("交易类型", ProjectUtils.PROJECT_TRANSACTION_DIRECTIONS[sysProjectTransaction.getDirection()]);
-            map.put("科目编号（关联业务人、部门）", String.valueOf(sysProjectTransaction.getAccountNumber()));
-            map.put("银行账号编号（关联银行账户）", String.valueOf(sysProjectTransaction.getBankNumber()));
+            Long accountNumber = sysProjectTransaction.getAccountNumber();
+            map.put("科目编号", String.valueOf(accountNumber));
+            map.put("科目描述", accountDtoMap.get(accountNumber).getDescription());
+            Long bankNumber = sysProjectTransaction.getBankNumber();
+            map.put("银行编号", String.valueOf(bankNumber));
+            map.put("银行描述", accountDtoMap.get(bankNumber).getDescription());
             map.put("记账凭证编号", sysProjectTransaction.getCertificateNumber());
             map.put("交易时间", sysProjectTransaction.getTransactionTime());
             map.put("创建人", sysProjectTransaction.getCreateBy());
@@ -176,13 +186,14 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     }
 
     @Override
-    public List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, boolean person) {
+    public List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, String type) {
+        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         List<SysProjectAccountDto> accountDtoList = sysProjectAccountService.queryAll(new SysProjectAccountQueryCriteria());
         List<SysProjectAccountDto> topAccountList = accountDtoList
                 .stream()
-                .filter(accountDto -> person ? accountDto.getAccountNumber().equals(getAccountNumberConfig().getPersonTopAccount()) : accountDto.getParent() == null)
+                .filter(accountDto -> accountNumberConfig.getTypeTopAccountMap().get(type).contains(accountDto.getAccountNumber()))
                 .collect(Collectors.toList());
-        Map<Long, SummaryData> summaryMap = calcSummaryMap(begin, end, person);
+        Map<Long, SummaryData> summaryMap = calcSummaryMap(begin, end, "person".equals(type));
         Map<Long, List<SysProjectAccountDto>> childrenMap = calcChildrenMap(accountDtoList);
         return topAccountList
                 .stream()
@@ -194,7 +205,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     private Map<Long, SummaryData> calcSummaryMap(Timestamp begin, Timestamp end, boolean person) {
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
-        criteria.setTransactionTime(List.of(new Timestamp(0), end));
+        criteria.setTransactionTime(List.of(new Timestamp(accountNumberConfig.getInitialTime()), end));
         List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
         Map<Long, SummaryData> summaryMap = new HashMap<>();
         summaryMap.putAll(buildMap(begin, transactionDtoList, false));
