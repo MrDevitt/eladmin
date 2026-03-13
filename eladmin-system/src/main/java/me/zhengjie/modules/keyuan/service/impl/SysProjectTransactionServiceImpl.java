@@ -165,13 +165,22 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                 ));
         for (SysProjectTransactionDto sysProjectTransaction : all) {
             Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", sysProjectTransaction.getId());
             map.put("摘要", sysProjectTransaction.getComment());
             map.put("金额", ProjectUtils.dbPriceToRealPrice(sysProjectTransaction.getAmount()));
             map.put("交易类型", ProjectUtils.PROJECT_TRANSACTION_DIRECTIONS[sysProjectTransaction.getDirection()]);
             Long accountNumber = sysProjectTransaction.getAccountNumber();
             map.put("科目编号", String.valueOf(accountNumber));
-            map.put("科目描述", accountDtoMap.get(accountNumber).getDescription());
+            SysProjectAccountDto accountDto = accountDtoMap.get(accountNumber);
+            if (accountDto == null) {
+                throw new RuntimeException("科目编号不存在,accountNumber=" + accountNumber);
+            }
+            map.put("科目描述", accountDto.getDescription());
             Long bankNumber = sysProjectTransaction.getBankNumber();
+            SysProjectAccountDto bankDto = accountDtoMap.get(bankNumber);
+            if (bankDto == null) {
+                throw new RuntimeException("银行编号不存在,accountNumber=" + accountNumber);
+            }
             map.put("银行编号", String.valueOf(bankNumber));
             map.put("银行描述", accountDtoMap.get(bankNumber).getDescription());
             map.put("记账凭证编号", sysProjectTransaction.getCertificateNumber());
@@ -242,7 +251,6 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                 }
                 SysProjectPersonDto salesPerson = personMap.get(k);
                 if (salesPerson == null) {
-                    log.error("科目编号对应业务人员不存在：{}", k);
                     return;
                 }
                 v.setRemainingShare(remainingByPerson.getOrDefault(salesPerson.getId(), 0L));

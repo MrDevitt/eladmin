@@ -87,6 +87,9 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectAccount resources) {
+        if (resources.getAccountNumber() > 9007199254740991L) {//前端js能处理的最大数
+            throw new RuntimeException("科目编号过长");
+        }
         checkPrefix(resources);
         if (findById(resources.getAccountNumber()) != null) {
             throw new RuntimeException("该科目编号已存在,请检查后重新修改！");
@@ -169,7 +172,22 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
             if (CollectionUtils.isNotEmpty(queryAll(criteria))) {
                 throw new RuntimeException("科目" + accountNumber + "仍有子科目，无法删除");
             }
+            Long parentId = findById(accountNumber).getParent();
             sysProjectAccountRepository.deleteById(accountNumber);
+            updateParent(parentId);
+        }
+    }
+
+    private void updateParent(Long parentId) {
+        SysProjectAccountDto parent = findById(parentId);
+        if (parent == null) {
+            return;
+        }
+        SysProjectAccountQueryCriteria criteria = new SysProjectAccountQueryCriteria();
+        criteria.setParent(parentId);
+        if (CollectionUtils.isEmpty(queryAll(criteria))) {
+            parent.setHasChildren(false);
+            sysProjectAccountRepository.save(sysProjectAccountMapper.toEntity(parent));
         }
     }
 

@@ -52,7 +52,7 @@ public class SysProjectPersonDto implements Serializable {
     private Timestamp updateTime;
 
     /**
-     * 开销科目编号
+     * 收入科目编号
      */
     private Long accountNumber;
 }
