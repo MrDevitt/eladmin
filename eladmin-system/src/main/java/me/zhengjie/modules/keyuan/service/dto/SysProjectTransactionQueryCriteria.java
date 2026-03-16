@@ -60,12 +60,6 @@ public class SysProjectTransactionQueryCriteria {
     private List<Long> bankNumberList;
 
     /**
-     * 精确
-     */
-    @Query
-    private Long typeNumber;
-
-    /**
      * 模糊
      */
     @Query(type = Query.Type.INNER_LIKE)
@@ -79,4 +73,12 @@ public class SysProjectTransactionQueryCriteria {
 
     @Query(type = Query.Type.IN, propName = "projectReceiveId")
     private List<Long> projectReceiveIds;
+
+
+    private Long parentAccountNumber;
+
+    private Boolean blackListEnable;
+
+    @Query(type = Query.Type.NOT_IN, propName = "id")
+    private List<Long> IdsNotIn;
 }

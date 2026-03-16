@@ -96,10 +96,39 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     }
 
     private void updateQueryCriteria(SysProjectTransactionQueryCriteria criteria) {
-        if (criteria != null && getAccountNumberConfig().isBankAccount(criteria.getAccountNumber())) {
+        if (criteria == null) {
+            return;
+        }
+        if (getAccountNumberConfig().isBankAccount(criteria.getAccountNumber())) {
             criteria.setBankNumber(criteria.getAccountNumber());
             criteria.setAccountNumber(null);
         }
+        if (criteria.getParentAccountNumber() != null) {
+            criteria.setAccountNumberList(queryAllLeafChildren(List.of(criteria.getParentAccountNumber())));
+        }
+        if (criteria.getBlackListEnable() != null && criteria.getBlackListEnable()) {
+            criteria.setIdsNotIn(new ArrayList<>(getAccountNumberConfig().getTransactionBlackList()));
+        }
+    }
+
+    private List<Long> queryAllLeafChildren(List<Long> parentIdList) {
+        if (CollectionUtils.isEmpty(parentIdList)) {
+            return new ArrayList<>();
+        }
+        List<Long> res = new ArrayList<>();
+        SysProjectAccountQueryCriteria accountQueryCriteria = new SysProjectAccountQueryCriteria();
+        accountQueryCriteria.setParents(parentIdList);
+        List<SysProjectAccountDto> accountDtoList = sysProjectAccountService.queryAll(accountQueryCriteria);
+        List<Long> nextParentIdList = new ArrayList<>();
+        for (SysProjectAccountDto accountDto : accountDtoList) {
+            if (accountDto.getHasChildren()) {
+                nextParentIdList.add(accountDto.getAccountNumber());
+            } else {
+                res.add(accountDto.getAccountNumber());
+            }
+        }
+        res.addAll(queryAllLeafChildren(nextParentIdList));
+        return res;
     }
 
     @Override
@@ -133,6 +162,9 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         criteria.setParents(List.of(resources.getAccountNumber(), resources.getBankNumber()));
         if (CollectionUtils.isNotEmpty(sysProjectAccountService.queryAll(criteria))) {
             throw new RuntimeException("科目" + resources.getAccountNumber() + "或银行" + resources.getBankNumber() + "有子科目，无法录入！");
+        }
+        if (resources.getTransactionTime().getTime() > System.currentTimeMillis()) {
+            throw new RuntimeException("交易时间大于当前时间！");
         }
     }
 
@@ -214,6 +246,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
     private Map<Long, SummaryData> calcSummaryMap(Timestamp begin, Timestamp end, boolean person) {
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
+        criteria.setIdsNotIn(new ArrayList<>(accountNumberConfig.getTransactionBlackList()));
         criteria.setTransactionTime(List.of(new Timestamp(accountNumberConfig.getInitialTime()), end));
         List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
         Map<Long, SummaryData> summaryMap = new HashMap<>();

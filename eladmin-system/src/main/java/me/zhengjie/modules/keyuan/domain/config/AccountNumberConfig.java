@@ -15,6 +15,7 @@ public class AccountNumberConfig {
     private Map<Integer, Map<String, Long>> typeAndRegionMap = new HashMap<>();
     private Map<String, Set<Long>> typeTopAccountMap = new HashMap<>();
     private Set<Long> projectBlackList = new HashSet<>();
+    private Set<Long> transactionBlackList = new HashSet<>();
     private Set<String> partyBBlackList = new HashSet<>();
     private Set<String> branchRegionSet = new HashSet<>(List.of("拉萨", "阿里", "那曲"));
     private String bankAccountPrefix = "-";

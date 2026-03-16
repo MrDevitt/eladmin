@@ -55,4 +55,7 @@ public class SysProjectAccountQueryCriteria {
 
     @Query
     private Boolean hasChildren;
+
+    //占位，有值就不会设置nullParent
+    private Boolean queryAll;
 }
