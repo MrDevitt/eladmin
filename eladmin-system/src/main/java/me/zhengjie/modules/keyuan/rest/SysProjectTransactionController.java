@@ -19,9 +19,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
-import me.zhengjie.modules.keyuan.domain.SysProjectTransaction;
 import me.zhengjie.modules.keyuan.domain.statistics.transaction.SummaryData;
 import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
+import me.zhengjie.modules.keyuan.service.dto.SysProjectBatchTransactionDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionQueryCriteria;
 import me.zhengjie.utils.PageResult;
@@ -77,8 +77,8 @@ public class SysProjectTransactionController {
     @Log("新增项目收支信息")
     @ApiOperation("新增项目收支信息")
     @PreAuthorize("@el.check('sysProjectTransaction:add')")
-    public ResponseEntity<Object> createSysProjectTransaction(@Validated @RequestBody SysProjectTransaction resources) {
-        sysProjectTransactionService.create(resources);
+    public ResponseEntity<Object> createSysProjectTransaction(@Validated @RequestBody SysProjectBatchTransactionDto resources) {
+        sysProjectTransactionService.create(resources.toDomainList());
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -86,8 +86,8 @@ public class SysProjectTransactionController {
     @Log("修改项目收支信息")
     @ApiOperation("修改项目收支信息")
     @PreAuthorize("@el.check('sysProjectTransaction:edit')")
-    public ResponseEntity<Object> updateSysProjectTransaction(@Validated @RequestBody SysProjectTransaction resources) {
-        sysProjectTransactionService.update(resources);
+    public ResponseEntity<Object> updateSysProjectTransaction(@Validated @RequestBody SysProjectBatchTransactionDto resources) {
+        sysProjectTransactionService.update(resources.toDomain());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

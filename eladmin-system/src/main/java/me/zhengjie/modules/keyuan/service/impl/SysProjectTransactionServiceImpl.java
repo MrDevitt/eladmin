@@ -147,10 +147,12 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void create(SysProjectTransaction resources) {
-        checkTransaction(resources);
-        resources.setCreateBy(SecurityUtils.getCurrentUsername());
-        sysProjectTransactionRepository.save(resources);
+    public void create(List<SysProjectTransaction> resources) {
+        resources.forEach(e -> {
+            checkTransaction(e);
+            e.setCreateBy(SecurityUtils.getCurrentUsername());
+        });
+        sysProjectTransactionRepository.saveAll(resources);
     }
 
     private void checkTransaction(SysProjectTransaction resources) {

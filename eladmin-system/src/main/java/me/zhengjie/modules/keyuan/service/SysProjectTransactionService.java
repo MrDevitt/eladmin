@@ -66,7 +66,7 @@ public interface SysProjectTransactionService {
      *
      * @param resources /
      */
-    void create(SysProjectTransaction resources);
+    void create(List<SysProjectTransaction> resources);
 
     /**
      * 编辑
