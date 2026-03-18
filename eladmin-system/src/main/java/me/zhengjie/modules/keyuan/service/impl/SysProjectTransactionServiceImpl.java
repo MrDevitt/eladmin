@@ -471,9 +471,9 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         }
         transaction.setBankNumber(bankNumber);
         transaction.setAccountNumber(accountNumber);
+        transaction.setTransactionTime(receive.getReceiveTime());
         checkTransaction(transaction);
         transaction.setAmount(amount);
-        transaction.setTransactionTime(receive.getReceiveTime());
         transaction.setComment(detailDto.getProjectName() + comment + receive.getId());
         transaction.setCertificateNumber(detailDto.getContractNumber() + "-" + receive.getId());
         transaction.setDirection(ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME);
