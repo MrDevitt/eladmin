@@ -15,6 +15,7 @@
  */
 package me.zhengjie.modules.keyuan.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
@@ -22,6 +23,7 @@ import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
 import me.zhengjie.modules.keyuan.domain.SysProjectTransaction;
 import me.zhengjie.modules.keyuan.domain.config.AccountNumberConfig;
 import me.zhengjie.modules.keyuan.domain.statistics.transaction.SummaryData;
+import me.zhengjie.modules.keyuan.domain.statistics.transaction.SysProjectTransactionExportDto;
 import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectGuaranteeRepository;
 import me.zhengjie.modules.keyuan.repository.SysProjectTransactionRepository;
@@ -38,6 +40,7 @@ import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectTransactionQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectTransactionMapper;
+import me.zhengjie.modules.keyuan.utils.ExcelExportUtils;
 import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
@@ -46,6 +49,8 @@ import me.zhengjie.utils.QueryHelp;
 import me.zhengjie.utils.SecurityUtils;
 import me.zhengjie.utils.ValidationUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.Triple;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -61,6 +66,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -230,13 +236,16 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
 
     @Override
     public List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, String type) {
-        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+        return getTransactionSummary(begin, end, getAccountNumberConfig().getTypeTopAccountMap().get(type), "person".equals(type));
+    }
+
+    private List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, Set<Long> topAccountSet, boolean person) {
         List<SysProjectAccountDto> accountDtoList = sysProjectAccountService.queryAll(new SysProjectAccountQueryCriteria());
         List<SysProjectAccountDto> topAccountList = accountDtoList
                 .stream()
-                .filter(accountDto -> accountNumberConfig.getTypeTopAccountMap().get(type).contains(accountDto.getAccountNumber()))
+                .filter(accountDto -> topAccountSet.contains(accountDto.getAccountNumber()))
                 .collect(Collectors.toList());
-        Map<Long, SummaryData> summaryMap = calcSummaryMap(begin, end, "person".equals(type));
+        Map<Long, SummaryData> summaryMap = calcSummaryMap(begin, end, person);
         Map<Long, List<SysProjectAccountDto>> childrenMap = calcChildrenMap(accountDtoList);
         return topAccountList
                 .stream()
@@ -488,6 +497,63 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         criteria.setProjectReceiveIds(Arrays.asList(receiveIds));
         Long[] ids = queryAll(criteria).stream().map(SysProjectTransactionDto::getId).toArray(Long[]::new);
         deleteAll(ids);
+    }
+
+    @Override
+    public void downloadTransactionSummary(HttpServletResponse response, Timestamp begin, Timestamp end, Long accountNumber) throws IOException {
+        SysProjectTransactionQueryCriteria criteria = new SysProjectTransactionQueryCriteria();
+        criteria.setTransactionTime(List.of(begin, end));
+        criteria.setParentAccountNumber(accountNumber);
+        criteria.setBlackListEnable(true);
+        List<SysProjectTransactionDto> transactionDtoList = queryAll(criteria);
+        Map<Long, SysProjectAccountDto> accountDtoMap = sysProjectAccountService.queryAll(new SysProjectAccountQueryCriteria())
+                .stream().collect(Collectors.toMap(
+                        SysProjectAccountDto::getAccountNumber,
+                        Function.identity(),
+                        (x, y) -> x
+                ));
+        List<SysProjectTransactionExportDto> exportDtoList = transactionDtoList.stream().map(e -> {
+            SysProjectTransactionExportDto exportDto = new SysProjectTransactionExportDto();
+            BeanUtil.copyProperties(e, exportDto);
+            exportDto.setAccountName(accountDtoMap.get(e.getAccountNumber()).getDescription());
+            return exportDto;
+        }).collect(Collectors.toList());
+        List<SummaryData> summaryDataList = getTransactionSummary(begin, end, Set.of(accountNumber), false);
+        List<SummaryData> flatList = new ArrayList<>();
+        flattenTreeData(summaryDataList, flatList, 0);
+
+        List<Triple<Class<?>, List<?>, String>> dataList = new ArrayList<>();
+        dataList.add(Triple.of(SummaryData.class, flatList, "科目统计汇总"));
+        dataList.add(Triple.of(SysProjectTransactionExportDto.class, exportDtoList, "交易明细数据"));
+        ExcelExportUtils.exportSummaryData(response, dataList);
+    }
+
+    private static void flattenTreeData(List<SummaryData> nodes, List<SummaryData> flatList, int level) {
+        if (nodes == null || nodes.isEmpty()) {
+            return;
+        }
+        for (SummaryData node : nodes) {
+            if (node.isEmptyValue()) {
+                continue;
+            }
+            SummaryData exportDto = new SummaryData();
+            // 拷贝基础属性 (也可以用 MapStruct 等工具)
+            BeanUtils.copyProperties(node, exportDto);
+
+            // 💡 小巧思：根据层级给名称加缩进，让 Excel 也能看出父子关系
+            StringBuilder prefix = new StringBuilder();
+            for (int i = 0; i < level; i++) {
+                prefix.append("*");
+            }
+            exportDto.setName(prefix + node.getName());
+
+            flatList.add(exportDto);
+
+            // 递归处理子节点，层级 +1
+            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+                flattenTreeData(node.getChildren(), flatList, level + 1);
+            }
+        }
     }
 
     private AccountNumberConfig getAccountNumberConfig() {

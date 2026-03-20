@@ -103,8 +103,16 @@ public class SysProjectTransactionController {
     @GetMapping("/summary")
     @Log("查询科目余额表")
     @ApiOperation("查询科目余额表")
-    @PreAuthorize("@el.check('sysProjectAccountSummay:list')")
-    public ResponseEntity<List<SummaryData>> querySysProjectTransaction(@RequestParam Timestamp begin, @RequestParam Timestamp end, @RequestParam String type) {
+    @PreAuthorize("@el.check('sysProjectTransaction:list')")
+    public ResponseEntity<List<SummaryData>> querySysProjectTransactionSummary(@RequestParam Timestamp begin, @RequestParam Timestamp end, @RequestParam String type) {
         return new ResponseEntity<>(sysProjectTransactionService.getTransactionSummary(begin, end, type), HttpStatus.OK);
+    }
+
+    @GetMapping("/summary/download")
+    @Log("下载科目余额表")
+    @ApiOperation("下载科目余额表")
+    @PreAuthorize("@el.check('sysProjectTransaction:list')")
+    public void downloadSysProjectTransaction(HttpServletResponse response, @RequestParam Timestamp begin, @RequestParam Timestamp end, @RequestParam Long accountNumber) throws IOException {
+        sysProjectTransactionService.downloadTransactionSummary(response, begin, end, accountNumber);
     }
 }

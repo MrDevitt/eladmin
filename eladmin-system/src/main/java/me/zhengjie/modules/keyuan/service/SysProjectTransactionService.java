@@ -98,4 +98,7 @@ public interface SysProjectTransactionService {
     void updateTransactionByReceive(SysProjectReceiveDto receive, boolean create);
 
     void deleteTransactionByReceive(Long[] receiveIds);
+
+    void downloadTransactionSummary(HttpServletResponse response, Timestamp begin, Timestamp end, Long accountNumber) throws IOException;
+
 }
