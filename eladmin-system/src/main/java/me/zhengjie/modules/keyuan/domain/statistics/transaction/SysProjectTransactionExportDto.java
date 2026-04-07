@@ -44,4 +44,7 @@ public class SysProjectTransactionExportDto {
     @ExcelProperty(value = "交易时间", converter = TimestampConverter.class)
     private Timestamp transactionTime;
 
+    @ExcelProperty("备注")
+    private String remark;
+
 }
