@@ -23,6 +23,7 @@ import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectGuaranteeMapper;
 import me.zhengjie.modules.keyuan.utils.PinyinUtils;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -250,9 +251,14 @@ public class SysProjectDetailTask {
     public void updateTransactionByReceive() {
         SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
         criteria.setReceiveAmount(0);
+        criteria.setReceiveTime(List.of(new Timestamp(1767200461000L), new Timestamp(System.currentTimeMillis())));
         List<SysProjectReceiveDto> sysProjectReceiveDtoList = sysProjectReceiveService.queryAll(criteria);
         for (SysProjectReceiveDto receiveDto : sysProjectReceiveDtoList) {
-            sysProjectTransactionService.updateTransactionByReceive(receiveDto, false);
+            try {
+                sysProjectTransactionService.updateTransactionByReceive(receiveDto, false);
+            } catch (Throwable throwable) {
+                log.error("更新收款数据异常", throwable);
+            }
         }
     }
 }

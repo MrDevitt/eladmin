@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.keyuan.domain.SysProjectDetail;
 import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
-import me.zhengjie.modules.keyuan.domain.SysProjectReceive;
 import me.zhengjie.modules.keyuan.domain.SysProjectTransaction;
 import me.zhengjie.modules.keyuan.domain.config.AccountNumberConfig;
 import me.zhengjie.modules.keyuan.domain.statistics.transaction.SummaryData;
@@ -161,6 +160,7 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         resources.forEach(e -> {
             checkTransaction(e);
             e.setCreateBy(SecurityUtils.getCurrentUsername());
+            e.setProjectReceiveId(null);
         });
         sysProjectTransactionRepository.saveAll(resources);
     }
@@ -415,7 +415,8 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                         transactionDto.setAmount(branchAmount);
                     }
                     transactionDto.setTransactionTime(receive.getReceiveTime());
-                    transactionDto.setUpdateBy(SecurityUtils.getCurrentUsername());
+                    transactionDto.setUpdateBy(ProjectUtils.getCurrentUsername());
+                    transactionDto.setRemark(buildRemark(receive, detailDto));
                 }
                 transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
             } else {
@@ -436,7 +437,8 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                         transactionDto.setAmount(otherAmount);
                     }
                     transactionDto.setTransactionTime(receive.getReceiveTime());
-                    transactionDto.setUpdateBy("系统");
+                    transactionDto.setUpdateBy(ProjectUtils.getCurrentUsername());
+                    transactionDto.setRemark(buildRemark(receive, detailDto));
                 }
                 transactionList.addAll(sysProjectTransactionMapper.toEntity(transactionDtoList));
             } else {
@@ -491,8 +493,21 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         transaction.setCertificateNumber(detailDto.getContractNumber() + "-" + receive.getId());
         transaction.setDirection(ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME);
         transaction.setProjectReceiveId(receive.getId());
-        transaction.setCreateBy(SecurityUtils.getCurrentUsername());
+        transaction.setCreateBy(ProjectUtils.getCurrentUsername());
+        transaction.setRemark(buildRemark(receive, detailDto));
         return transaction;
+    }
+
+    private String buildRemark(SysProjectReceiveDto receive, SysProjectDetail detail) {
+        String remark = ProjectUtils.PROJECT_TYPE_NAMES[detail.getProjectType()] + "收款:" + ProjectUtils.dbPriceToRealPriceString(receive.getReceiveAmount());
+        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+        if (detail.getProjectType().equals(ProjectUtils.PROJECT_TYPE_EXAM) &&
+                accountNumberConfig.getBranchRegionSet().contains(detail.getProjectRegion())) {
+            remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;分公司比例:" + detail.getTechnicalPercent() + "%;总公司比例:" + detail.getManagementPercent() + "%";
+        } else {
+            remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;部门比例:" + detail.getTechnicalPercent() + "%";
+        }
+        return remark;
     }
 
     @Override
@@ -516,35 +531,35 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                         Function.identity(),
                         (x, y) -> x
                 ));
-        Map<Long, SysProjectReceive> receiveMap = sysProjectReceiveRepository.findAll()
-                .stream().collect(Collectors.toMap(
-                        SysProjectReceive::getId,
-                        Function.identity(),
-                        (x, y) -> x
-                ));
-        Map<Long, SysProjectDetail> detailMap = sysProjectDetailRepository.findAll()
-                .stream().collect(Collectors.toMap(
-                        SysProjectDetail::getId,
-                        Function.identity(),
-                        (x, y) -> x
-                ));
-        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+//        Map<Long, SysProjectReceive> receiveMap = sysProjectReceiveRepository.findAll()
+//                .stream().collect(Collectors.toMap(
+//                        SysProjectReceive::getId,
+//                        Function.identity(),
+//                        (x, y) -> x
+//                ));
+//        Map<Long, SysProjectDetail> detailMap = sysProjectDetailRepository.findAll()
+//                .stream().collect(Collectors.toMap(
+//                        SysProjectDetail::getId,
+//                        Function.identity(),
+//                        (x, y) -> x
+//                ));
+//        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         List<SysProjectTransactionExportDto> exportDtoList = transactionDtoList.stream().map(e -> {
             SysProjectTransactionExportDto exportDto = new SysProjectTransactionExportDto();
             BeanUtil.copyProperties(e, exportDto);
             exportDto.setAccountName(accountDtoMap.get(e.getAccountNumber()).getDescription());
-            if (e.getDirection() == ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME && e.getProjectReceiveId() != null) {
-                SysProjectReceive receive = receiveMap.get(e.getProjectReceiveId());
-                String remark = "总金额:" + ProjectUtils.dbPriceToRealPriceString(receive.getReceiveAmount());
-                SysProjectDetail detail = detailMap.get(receive.getProjectId());
-                if (detail.getProjectType().equals(ProjectUtils.PROJECT_TYPE_EXAM) &&
-                        accountNumberConfig.getBranchRegionSet().contains(detail.getProjectRegion())) {
-                    remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;分公司比例:" + detail.getTechnicalPercent() + "%;总公司比例:" + detail.getManagementPercent() + "%";
-                } else {
-                    remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;部门比例:" + detail.getTechnicalPercent() + "%";
-                }
-                exportDto.setRemark(remark);
-            }
+//            if (e.getDirection() == ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME && e.getProjectReceiveId() != null) {
+//                SysProjectReceive receive = receiveMap.get(e.getProjectReceiveId());
+//                String remark = "总金额:" + ProjectUtils.dbPriceToRealPriceString(receive.getReceiveAmount());
+//                SysProjectDetail detail = detailMap.get(receive.getProjectId());
+//                if (detail.getProjectType().equals(ProjectUtils.PROJECT_TYPE_EXAM) &&
+//                        accountNumberConfig.getBranchRegionSet().contains(detail.getProjectRegion())) {
+//                    remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;分公司比例:" + detail.getTechnicalPercent() + "%;总公司比例:" + detail.getManagementPercent() + "%";
+//                } else {
+//                    remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;部门比例:" + detail.getTechnicalPercent() + "%";
+//                }
+//                exportDto.setRemark(remark);
+//            }
             return exportDto;
         }).collect(Collectors.toList());
         List<SummaryData> summaryDataList = getTransactionSummary(begin, end, Set.of(accountNumber), false);

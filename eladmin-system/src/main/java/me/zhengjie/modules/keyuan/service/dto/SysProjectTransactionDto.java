@@ -70,6 +70,8 @@ public class SysProjectTransactionDto implements Serializable {
      */
     private Timestamp transactionTime;
 
+    private String remark;
+
     private Long projectReceiveId;
 
     /**

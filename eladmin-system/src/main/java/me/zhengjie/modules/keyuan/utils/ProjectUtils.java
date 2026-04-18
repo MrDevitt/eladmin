@@ -2,6 +2,7 @@ package me.zhengjie.modules.keyuan.utils;
 
 import me.zhengjie.modules.keyuan.domain.statistics.balance.ProjectDepartment;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
+import me.zhengjie.utils.SecurityUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.Field;
@@ -245,5 +246,14 @@ public class ProjectUtils {
             clazz = clazz.getSuperclass(); // 检查父类字段
         }
         return true; // 所有字段都为空
+    }
+
+    public static String getCurrentUsername() {
+        try {
+            return SecurityUtils.getCurrentUsername();
+        } catch (Exception ignored) {
+
+        }
+        return "系统";
     }
 }

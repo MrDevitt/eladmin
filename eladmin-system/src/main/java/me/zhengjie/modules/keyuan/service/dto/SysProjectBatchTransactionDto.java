@@ -1,7 +1,6 @@
 package me.zhengjie.modules.keyuan.service.dto;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson.JSON;
 import lombok.Data;
 import me.zhengjie.modules.keyuan.domain.SysProjectTransaction;
 
@@ -15,7 +14,7 @@ public class SysProjectBatchTransactionDto extends SysProjectTransactionDto {
 
     public SysProjectTransaction toDomain() {
         if (details == null || details.size() != 1) {
-            throw new RuntimeException("子项数据不合理detail=" + JSON.toJSONString(details));
+            throw new RuntimeException("子项数据仅能有一项，实际项数:" + (details == null ? 0 : details.size()));
         }
         SysProjectTransaction res = new SysProjectTransaction();
         BeanUtil.copyProperties(this, res);
@@ -26,6 +25,7 @@ public class SysProjectBatchTransactionDto extends SysProjectTransactionDto {
         res.setDirection(detail.getDirection());
         res.setAccountNumber(detail.getAccountNumber());
         res.setBankNumber(detail.getBankNumber());
+        res.setRemark(detail.getRemark());
         return res;
     }
 
@@ -40,6 +40,7 @@ public class SysProjectBatchTransactionDto extends SysProjectTransactionDto {
             transaction.setDirection(detail.getDirection());
             transaction.setAccountNumber(detail.getAccountNumber());
             transaction.setBankNumber(detail.getBankNumber());
+            transaction.setRemark(detail.getRemark());
             res.add(transaction);
         }
         return res;
@@ -52,6 +53,7 @@ public class SysProjectBatchTransactionDto extends SysProjectTransactionDto {
         private Integer direction;
         private Long accountNumber;
         private Long bankNumber;
+        private String remark;
     }
 
 }

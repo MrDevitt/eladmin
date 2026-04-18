@@ -85,6 +85,10 @@ public class SysProjectTransaction implements Serializable {
     @ApiModelProperty(value = "交易时间")
     private Timestamp transactionTime;
 
+    @Column(name = "`remark`")
+    @ApiModelProperty(value = "备注")
+    private String remark;
+
     @Column(name = "`project_receive_id`")
     @ApiModelProperty(value = "项目收款id")
     private Long projectReceiveId;
