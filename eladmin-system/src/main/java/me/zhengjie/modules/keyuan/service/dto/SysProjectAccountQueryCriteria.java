@@ -28,9 +28,6 @@ import java.util.List;
 @Data
 public class SysProjectAccountQueryCriteria {
 
-    @Query
-    private Long id;
-
     /**
      * 精确
      */

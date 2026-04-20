@@ -31,11 +31,6 @@ import java.sql.Timestamp;
 @Data
 public class SysProjectAccountDto implements Serializable {
 
-    /**
-     * 主键ID
-     */
-    private Long id;
-
     /** 科目编号 */
     /**
      * 防止精度丢失

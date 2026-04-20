@@ -90,10 +90,20 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
         if (resources.getAccountNumber() > 9007199254740991L) {//前端js能处理的最大数
             throw new RuntimeException("科目编号过长");
         }
-//        if (findById(resources.getAccountNumber()) != null) {
-//            throw new RuntimeException("该科目编号已存在,请检查后重新修改！");
-//        }
         checkPrefix(resources);
+        if (findById(resources.getAccountNumber()) != null) {
+            throw new RuntimeException("该科目编号已存在,请检查后重新修改！");
+        }
+        if (resources.getParent() != null) {
+            SysProjectAccount parent = sysProjectAccountRepository.findById(resources.getParent()).orElse(null);
+            if (parent == null) {
+                throw new RuntimeException("父科目不存在,请检查后重新修改！");
+            }
+            if (!parent.getHasChildren()) {
+                parent.setHasChildren(true);
+                sysProjectAccountRepository.save(parent);
+            }
+        }
         resources.setCreateBy(SecurityUtils.getCurrentUsername());
         resources.setHasChildren(false);
         sysProjectAccountRepository.save(resources);
@@ -102,15 +112,15 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(SysProjectAccount resources) {
-        SysProjectAccount sysProjectAccount = sysProjectAccountRepository.findById(resources.getId()).orElseGet(SysProjectAccount::new);
-        ValidationUtil.isNull(sysProjectAccount.getId(), "SysProjectAccount", "id", resources.getId());
+        SysProjectAccount sysProjectAccount = sysProjectAccountRepository.findById(resources.getAccountNumber()).orElseGet(SysProjectAccount::new);
+        ValidationUtil.isNull(sysProjectAccount.getAccountNumber(), "SysProjectAccount", "id", resources.getAccountNumber());
         sysProjectAccount.copy(resources);
-        checkPrefix(resources);
         Map<Long, SysProjectAccount> accountMap = queryAll(new SysProjectAccountQueryCriteria()).stream().map(sysProjectAccountMapper::toEntity).collect(Collectors.toMap(
                 SysProjectAccount::getAccountNumber,
                 Function.identity(),
                 (x, y) -> x
         ));
+        checkPrefix(sysProjectAccount);
         if (hasCircle(accountMap, sysProjectAccount.getAccountNumber(), new HashSet<>())) {
             throw new RuntimeException("父科目成环,请检查后重新修改！");
         }
@@ -148,16 +158,8 @@ public class SysProjectAccountServiceImpl implements SysProjectAccountService {
 
     private void checkPrefix(SysProjectAccount account) {
         if (account.getParent() != null) {
-            SysProjectAccount parent = sysProjectAccountRepository.findById(account.getParent()).orElse(null);
-            if (parent == null) {
-                throw new RuntimeException("父科目不存在,请检查后重新修改！");
-            }
-            if (!account.getAccountNumber().toString().startsWith(parent.getAccountNumber().toString())) {
+            if (!account.getAccountNumber().toString().startsWith(account.getParent().toString())) {
                 throw new RuntimeException("科目" + account.getAccountNumber() + "的编号起始与父科目不一致");
-            }
-            if (!parent.getHasChildren()) {
-                parent.setHasChildren(true);
-                sysProjectAccountRepository.save(parent);
             }
         }
     }
