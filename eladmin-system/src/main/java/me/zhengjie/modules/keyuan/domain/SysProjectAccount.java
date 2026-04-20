@@ -24,6 +24,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
@@ -43,6 +45,11 @@ import java.sql.Timestamp;
 public class SysProjectAccount implements Serializable {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`id`")
+    @ApiModelProperty(value = "主键ID")
+    private Long id;
+
     @Column(name = "`account_number`", nullable = false)
     @ApiModelProperty(value = "科目编号")
     private Long accountNumber;

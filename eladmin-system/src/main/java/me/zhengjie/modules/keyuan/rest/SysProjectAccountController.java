@@ -75,7 +75,7 @@ public class SysProjectAccountController {
     public ResponseEntity<PageResult<JSONObject>> querySysProjectAccount(SysProjectAccountQueryCriteria criteria, Pageable pageable) {
         PageResult<JSONObject> ret = sysProjectAccountService.queryAll(criteria, pageable).map(e -> {
             JSONObject o = JSON.parseObject(JSON.toJSONString(e));
-            o.put("value", e.getAccountNumber());
+            o.put("value", e.getId());
             o.put("label", e.getAccountNumber() + "-" + e.getDescription());
             o.put("leaf", !e.getHasChildren());
             return o;
