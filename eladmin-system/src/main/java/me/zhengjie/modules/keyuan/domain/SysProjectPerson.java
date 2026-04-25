@@ -73,6 +73,10 @@ public class SysProjectPerson implements Serializable {
     @ApiModelProperty(value = "收入科目编号")
     private Long accountNumber;
 
+    @Column(name = "`ding_talk_user_id`")
+    @ApiModelProperty(value = "钉钉用户id")
+    private String dingTalkUserId;
+
     public void copy(SysProjectPerson source) {
         BeanUtil.copyProperties(source, this, CopyOptions.create().setIgnoreNullValue(true));
     }

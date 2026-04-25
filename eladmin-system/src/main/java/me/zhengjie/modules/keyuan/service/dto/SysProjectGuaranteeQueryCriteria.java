@@ -49,6 +49,10 @@ public class SysProjectGuaranteeQueryCriteria {
      */
     @Query
     private Long guaranteePerson;
+
+    @Query(type = Query.Type.IN, propName = "guaranteePerson")
+    private List<Long> guaranteePersons;
+
     /**
      * BETWEEN
      */

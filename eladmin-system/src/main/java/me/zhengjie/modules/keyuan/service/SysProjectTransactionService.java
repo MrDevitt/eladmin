@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author MrDevitt
@@ -94,6 +95,8 @@ public interface SysProjectTransactionService {
 
     List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, String type);
 
+
+    List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, Set<Long> topAccountSet, boolean person);
 
     void updateTransactionByReceive(SysProjectReceiveDto receive, boolean create);
 

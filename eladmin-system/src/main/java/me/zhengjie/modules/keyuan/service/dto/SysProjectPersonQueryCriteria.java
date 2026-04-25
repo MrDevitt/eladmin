@@ -29,6 +29,9 @@ import java.util.List;
 @Data
 public class SysProjectPersonQueryCriteria {
 
+    @Query(type = Query.Type.IN, propName = "id")
+    private List<Long> ids;
+
     /**
      * 模糊
      */

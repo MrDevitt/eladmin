@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import me.zhengjie.modules.keyuan.domain.SysGuaranteeData;
 import me.zhengjie.modules.keyuan.domain.SysProjectGuarantee;
 import me.zhengjie.modules.keyuan.repository.SysProjectGuaranteeRepository;
-import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectGuaranteeService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectGuaranteeDto;
@@ -62,8 +61,6 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
     private final SysProjectPersonService sysProjectPersonService;
 
     private final SysProjectStatisticsService sysProjectStatisticsService;
-
-    private final SysProjectDetailService sysProjectDetailService;
 
 
     @Override
@@ -144,8 +141,6 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
             statusMap.put(dto.getStatus(), amount + dto.getGuaranteeAmount());
             statusMap.put(-1, totalAmount + dto.getGuaranteeAmount());
         }
-        Map<Long, Long> remainingByPerson = sysProjectDetailService.getPersonRemainingMap();
-        Map<Long, Long> balanceByPerson = sysProjectStatisticsService.getBalancePersonMap();
         List<Map<String, String>> tableData = new ArrayList<>();
         guaranteeByPersonAndStatus.forEach((k, v) -> {
             Map<String, String> data = new HashMap<>();
@@ -153,8 +148,6 @@ public class SysProjectGuaranteeServiceImpl implements SysProjectGuaranteeServic
             data.put("normal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0L))));
             data.put("abnormal", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0L))));
             data.put("sum", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(v.getOrDefault(-1, 0L))));
-            long remaining = remainingByPerson.getOrDefault(k, 0L) + balanceByPerson.getOrDefault(k, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_NORMAL, 0L) - v.getOrDefault(SysProjectGuaranteeDto.STATUS_ABNORMAL, 0L);
-            data.put("remaining", String.format("%.2f", ProjectUtils.dbPriceToRealPrice(remaining)));
             tableData.add(data);
         });
         tableData.sort(Comparator.comparing(a -> -Integer.parseInt(a.get("sum").substring(0, a.get("sum").length() - 3))));

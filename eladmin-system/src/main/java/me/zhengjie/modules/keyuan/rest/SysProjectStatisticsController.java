@@ -9,7 +9,6 @@ import me.zhengjie.modules.keyuan.domain.statistics.InvoiceTableRow;
 import me.zhengjie.modules.keyuan.domain.statistics.InvoicedNotReceiveData;
 import me.zhengjie.modules.keyuan.domain.statistics.SysProjectStatistics;
 import me.zhengjie.modules.keyuan.domain.statistics.SysReceiveStatistics;
-import me.zhengjie.modules.keyuan.domain.statistics.balance.BalanceData;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.impl.SysProjectStatisticsService;
 import me.zhengjie.modules.keyuan.utils.CalendarUtils;
@@ -22,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 
 @Slf4j
@@ -73,26 +70,6 @@ public class SysProjectStatisticsController {
         return new ResponseEntity<>(sysProjectStatisticsService.getInvoiceData(endTime), HttpStatus.OK);
     }
 
-    @GetMapping("/balance")
-    @Log("查询余额表")
-    @ApiOperation("查询余额表")
-    @PreAuthorize("@el.check('sysProjectStatistics:list')")
-    public ResponseEntity<BalanceData> querySysProjectBalance(@RequestParam(required = false) Integer month) {
-        long endTime = System.currentTimeMillis();
-        if (month != null) {
-            endTime = CalendarUtils.getEndOfMonth(month).getTimeInMillis();
-        }
-        return new ResponseEntity<>(sysProjectStatisticsService.getBalanceData(endTime), HttpStatus.OK);
-    }
-
-
-    @Log("导出余额表数据")
-    @ApiOperation("导出余额表数据")
-    @GetMapping(value = "/balance/download")
-    @PreAuthorize("@el.check('sysProjectStatistics:list')")
-    public void exportSysProjectBalance(HttpServletResponse response, @RequestParam int month) throws IOException {
-        sysProjectStatisticsService.downloadSysProjectBalance(month, response);
-    }
 
     @GetMapping("/invoicedNotReceive")
     @Log("查询已开票未收款数据")

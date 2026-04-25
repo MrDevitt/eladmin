@@ -55,4 +55,6 @@ public class SysProjectPersonDto implements Serializable {
      * 收入科目编号
      */
     private Long accountNumber;
+
+    private String dingTalkUserId;
 }

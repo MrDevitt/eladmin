@@ -243,7 +243,8 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         return getTransactionSummary(begin, end, getAccountNumberConfig().getTypeTopAccountMap().get(type), "person".equals(type));
     }
 
-    private List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, Set<Long> topAccountSet, boolean person) {
+    @Override
+    public List<SummaryData> getTransactionSummary(Timestamp begin, Timestamp end, Set<Long> topAccountSet, boolean person) {
         List<SysProjectAccountDto> accountDtoList = sysProjectAccountService.queryAll(new SysProjectAccountQueryCriteria());
         List<SysProjectAccountDto> topAccountList = accountDtoList
                 .stream()
