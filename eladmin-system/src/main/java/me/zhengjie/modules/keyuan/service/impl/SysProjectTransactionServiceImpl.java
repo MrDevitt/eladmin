@@ -267,6 +267,37 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
         Map<Long, SummaryData> summaryMap = new HashMap<>();
         summaryMap.putAll(buildMap(begin, transactionDtoList, false));
         summaryMap.putAll(buildMap(begin, transactionDtoList, true));
+        //计算提成余额，重复代码，待优化依赖关系,与person部分有重复
+        List<SysProjectDetail> detailList = sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, null, criteriaBuilder));
+        Map<Long, Long> remainingByPerson = new HashMap<>();
+        Map<Long, Long> remainingByAccountNumber = new HashMap<>();
+        Map<Long, SysProjectPersonDto> personDtoMap = sysProjectPersonService.getIdToPersonMap();
+        for (SysProjectDetail detail : detailList) {
+            if (ProjectUtils.PROJECT_TYPE_OTHER == detail.getProjectType()) {
+                continue;
+            }
+            long remainingAll = detail.getContractAmount() - Optional.ofNullable(detail.getReceiveAmount()).orElse(0L);
+            if (remainingAll <= 0) {
+                continue;
+            }
+            long personAmount = remainingAll * detail.getSalesPercent() / 100;
+            remainingByPerson.put(detail.getSalesPerson(), remainingByPerson.getOrDefault(detail.getSalesPerson(), 0L) + Math.max(personAmount, 0));
+            Long personAccountNumber = personDtoMap.get(detail.getSalesPerson()).getAccountNumber();
+            remainingByAccountNumber.put(personAccountNumber, remainingByAccountNumber.getOrDefault(personAccountNumber, 0L) + Math.max(personAmount, 0));
+
+            Long companyAccountNumber = getCompanyAccountNumber(detail, accountNumberConfig);
+            if (detail.getProjectType().equals(ProjectUtils.PROJECT_TYPE_EXAM) &&
+                    accountNumberConfig.getBranchRegionSet().contains(detail.getProjectRegion())) {//检测分公司
+                long hqAmount = remainingAll * detail.getManagementPercent() / 100;
+                long branchAmount = remainingAll - hqAmount - personAmount;
+                remainingByAccountNumber.put(companyAccountNumber, remainingByAccountNumber.getOrDefault(companyAccountNumber, 0L) + branchAmount);
+                remainingByAccountNumber.put(accountNumberConfig.getHqAccountNumber(), remainingByAccountNumber.getOrDefault(accountNumberConfig.getHqAccountNumber(), 0L) + hqAmount);
+            } else {
+                long otherAmount = remainingAll - personAmount;
+                remainingByAccountNumber.put(companyAccountNumber, remainingByAccountNumber.getOrDefault(companyAccountNumber, 0L) + otherAmount);
+            }
+        }
+        summaryMap.forEach((k, v) -> v.setRemainingShare(remainingByAccountNumber.getOrDefault(k, 0L)));
         if (person) {
             Map<Long, SysProjectPersonDto> personMap = sysProjectPersonService.getAccountNumberToPersonMap();
             personMap.forEach((k, v) -> {
@@ -275,14 +306,6 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                 }
                 summaryMap.put(k, new SummaryData());//保证业务人数据
             });
-            //计算提成余额，重复代码，待优化依赖关系
-            List<SysProjectDetail> detailList = sysProjectDetailRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, null, criteriaBuilder));
-            Map<Long, Long> remainingByPerson = new HashMap<>();
-            for (SysProjectDetail detail : detailList) {
-                long remaining = detail.getContractAmount() - Optional.ofNullable(detail.getReceiveAmount()).orElse(0L);
-                remaining = remaining * detail.getSalesPercent() / 100;
-                remainingByPerson.put(detail.getSalesPerson(), remainingByPerson.getOrDefault(detail.getSalesPerson(), 0L) + Math.max(remaining, 0));
-            }
             //获取担保金额
             SysProjectGuaranteeQueryCriteria guaranteeCriteria = new SysProjectGuaranteeQueryCriteria();
             guaranteeCriteria.setStatus(List.of(SysProjectGuaranteeDto.STATUS_NORMAL, SysProjectGuaranteeDto.STATUS_ABNORMAL));
@@ -462,13 +485,17 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
 
     private Long getCompanyAccountNumber(SysProjectDetail detailDto) {
         AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
+        return getCompanyAccountNumber(detailDto, accountNumberConfig);
+    }
+
+    private Long getCompanyAccountNumber(SysProjectDetail detailDto, AccountNumberConfig accountNumberConfig) {
         Map<String, Long> regionMap = accountNumberConfig.getTypeAndRegionMap().get(detailDto.getProjectType());
         if (regionMap == null) {
             throw new RuntimeException("regionMap不存在, type=" + detailDto.getProjectType());
         }
         Long accountNumber = regionMap.get(detailDto.getProjectRegion());
         if (accountNumber == null) {
-            throw new RuntimeException("region accountNumber不存在, region=" + detailDto.getProjectRegion());
+            throw new RuntimeException("region accountNumber不存在, region=" + detailDto.getProjectRegion() + "，编号=" + detailDto.getContractNumber());
         }
         return accountNumber;
     }
@@ -531,35 +558,10 @@ public class SysProjectTransactionServiceImpl implements SysProjectTransactionSe
                         Function.identity(),
                         (x, y) -> x
                 ));
-//        Map<Long, SysProjectReceive> receiveMap = sysProjectReceiveRepository.findAll()
-//                .stream().collect(Collectors.toMap(
-//                        SysProjectReceive::getId,
-//                        Function.identity(),
-//                        (x, y) -> x
-//                ));
-//        Map<Long, SysProjectDetail> detailMap = sysProjectDetailRepository.findAll()
-//                .stream().collect(Collectors.toMap(
-//                        SysProjectDetail::getId,
-//                        Function.identity(),
-//                        (x, y) -> x
-//                ));
-//        AccountNumberConfig accountNumberConfig = getAccountNumberConfig();
         List<SysProjectTransactionExportDto> exportDtoList = transactionDtoList.stream().map(e -> {
             SysProjectTransactionExportDto exportDto = new SysProjectTransactionExportDto();
             BeanUtil.copyProperties(e, exportDto);
             exportDto.setAccountName(accountDtoMap.get(e.getAccountNumber()).getDescription());
-//            if (e.getDirection() == ProjectUtils.PROJECT_TRANSACTION_DIRECTION_INCOME && e.getProjectReceiveId() != null) {
-//                SysProjectReceive receive = receiveMap.get(e.getProjectReceiveId());
-//                String remark = "总金额:" + ProjectUtils.dbPriceToRealPriceString(receive.getReceiveAmount());
-//                SysProjectDetail detail = detailMap.get(receive.getProjectId());
-//                if (detail.getProjectType().equals(ProjectUtils.PROJECT_TYPE_EXAM) &&
-//                        accountNumberConfig.getBranchRegionSet().contains(detail.getProjectRegion())) {
-//                    remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;分公司比例:" + detail.getTechnicalPercent() + "%;总公司比例:" + detail.getManagementPercent() + "%";
-//                } else {
-//                    remark = remark + ";业务比例:" + detail.getSalesPercent() + "%;部门比例:" + detail.getTechnicalPercent() + "%";
-//                }
-//                exportDto.setRemark(remark);
-//            }
             return exportDto;
         }).collect(Collectors.toList());
         List<SummaryData> summaryDataList = getTransactionSummary(begin, end, Set.of(accountNumber), false);

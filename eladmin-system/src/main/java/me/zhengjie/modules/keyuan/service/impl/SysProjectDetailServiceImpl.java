@@ -24,6 +24,7 @@ import me.zhengjie.modules.keyuan.repository.SysProjectDetailRepository;
 import me.zhengjie.modules.keyuan.service.SysProjectDetailService;
 import me.zhengjie.modules.keyuan.service.SysProjectPersonService;
 import me.zhengjie.modules.keyuan.service.SysProjectReceiveService;
+import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectDetailQueryCriteria;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectPersonDto;
@@ -74,6 +75,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
 
     private final SysProjectReceiveService sysProjectReceiveService;
 
+    private final SysProjectTransactionService sysProjectTransactionService;
     private final SysProjectPersonService projectPersonService;
 
     private final LocalStorageService localStorageService;
@@ -185,6 +187,12 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             throw new EntityExistException(SysProjectDetail.class, "contract_number", resources.getContractNumber());
         }
         sysProjectDetail.copy(resources);
+
+        //触发收支明细更新
+        SysProjectReceiveQueryCriteria criteria = new SysProjectReceiveQueryCriteria();
+        criteria.setProjectId(sysProjectDetail.getId());
+        sysProjectReceiveService.queryAll(criteria).forEach(e -> sysProjectTransactionService.updateTransactionByReceive(e, false));
+
         sysProjectDetailRepository.save(sysProjectDetail);
         SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;

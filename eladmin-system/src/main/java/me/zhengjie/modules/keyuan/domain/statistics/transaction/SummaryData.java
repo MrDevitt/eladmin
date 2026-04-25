@@ -17,45 +17,46 @@ public class SummaryData {
     @ExcelProperty("科目名称")
     private String name;
 
-    // 使用 MoneyConverter 除以100。
-    // 配合 @NumberFormat("#,##0.00") 可以在 Excel 里呈现完美的会计千分位格式！
-    @ExcelProperty(value = "初始余额", converter = MoneyConverter.class)
+    @ExcelProperty(value = "往年盈亏", converter = MoneyConverter.class)
     @NumberFormat("###,##0.00")
     private long initialAmount;
 
-    @ExcelProperty(value = {"期初余额", "收入"}, converter = MoneyConverter.class)
-    @NumberFormat("###,##0.00")
+    //    @ExcelProperty(value = {"期初余额", "收入"}, converter = MoneyConverter.class)
+//    @NumberFormat("###,##0.00")
+    @ExcelIgnore
     private long beginIncome;
 
-    @ExcelProperty(value = {"期初余额", "支出"}, converter = MoneyConverter.class)
-    @NumberFormat("#,##0.00")
+    //    @ExcelProperty(value = {"期初余额", "支出"}, converter = MoneyConverter.class)
+//    @NumberFormat("#,##0.00")
+    @ExcelIgnore
     private long beginExpense;
 
-    @ExcelProperty(value = {"期初余额", "结余"}, converter = MoneyConverter.class)
-    @NumberFormat("#,##0.00")
+    //    @ExcelProperty(value = {"期初余额", "结余"}, converter = MoneyConverter.class)
+//    @NumberFormat("#,##0.00")
+    @ExcelIgnore
     private long beginRemain;
 
-    @ExcelProperty(value = {"本期余额", "收入"}, converter = MoneyConverter.class)
+    @ExcelProperty(value = {"本期盈亏", "收入"}, converter = MoneyConverter.class)
     @NumberFormat("#,##0.00")
     private long currentIncome;
 
-    @ExcelProperty(value = {"本期余额", "支出"}, converter = MoneyConverter.class)
+    @ExcelProperty(value = {"本期盈亏", "支出"}, converter = MoneyConverter.class)
     @NumberFormat("#,##0.00")
     private long currentExpense;
 
-    @ExcelProperty(value = {"本期余额", "结余"}, converter = MoneyConverter.class)
+    @ExcelProperty(value = {"本期盈亏", "结余"}, converter = MoneyConverter.class)
     @NumberFormat("#,##0.00")
     private long currentRemain;
 
-    @ExcelProperty(value = {"期末余额", "收入"}, converter = MoneyConverter.class)
+    @ExcelProperty(value = {"期末盈亏", "收入"}, converter = MoneyConverter.class)
     @NumberFormat("#,##0.00")
     private long endIncome;
 
-    @ExcelProperty(value = {"期末余额", "支出"}, converter = MoneyConverter.class)
+    @ExcelProperty(value = {"期末盈亏", "支出"}, converter = MoneyConverter.class)
     @NumberFormat("#,##0.00")
     private long endExpense;
 
-    @ExcelProperty(value = {"期末余额", "结余"}, converter = MoneyConverter.class)
+    @ExcelProperty(value = {"期末盈亏", "结余"}, converter = MoneyConverter.class)
     @NumberFormat("#,##0.00")
     private long endRemain;
     @ExcelIgnore
