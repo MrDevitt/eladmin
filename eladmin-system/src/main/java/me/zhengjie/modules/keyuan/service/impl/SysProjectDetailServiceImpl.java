@@ -169,6 +169,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
             throw new EntityExistException(SysProjectDetail.class, "contract_number", resources.getContractNumber());
         }
         resources.setReceiveAmount(0L);//防止为null后影响未收款筛选
+        resources.setCreateBy(ProjectUtils.getCurrentUsername());
         sysProjectDetailRepository.save(resources);
         SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;
@@ -193,6 +194,7 @@ public class SysProjectDetailServiceImpl implements SysProjectDetailService {
         criteria.setProjectId(sysProjectDetail.getId());
         sysProjectReceiveService.queryAll(criteria).forEach(e -> sysProjectTransactionService.updateTransactionByReceive(e, false));
 
+        sysProjectDetail.setUpdateBy(ProjectUtils.getCurrentUsername());
         sysProjectDetailRepository.save(sysProjectDetail);
         SysProjectStatistics.CACHE_MAP.clear();
         sysProjectDetailDtoMap = null;

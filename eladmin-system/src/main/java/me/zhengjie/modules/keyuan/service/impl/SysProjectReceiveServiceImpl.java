@@ -26,6 +26,7 @@ import me.zhengjie.modules.keyuan.service.SysProjectTransactionService;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveDto;
 import me.zhengjie.modules.keyuan.service.dto.SysProjectReceiveQueryCriteria;
 import me.zhengjie.modules.keyuan.service.mapstruct.SysProjectReceiveMapper;
+import me.zhengjie.modules.keyuan.utils.ProjectUtils;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
@@ -90,6 +91,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(SysProjectReceive resources) {
+        resources.setCreateBy(ProjectUtils.getCurrentUsername());
         SysProjectReceive saved = sysProjectReceiveRepository.saveAndFlush(resources);//确保立即更新，保证updateReceiveAmount中读取到最新数据
         if (saved.getReceiveAmount() > 0L) {//返回值才会有Id
             sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(saved), true);
@@ -104,6 +106,7 @@ public class SysProjectReceiveServiceImpl implements SysProjectReceiveService {
         SysProjectReceive sysProjectReceive = sysProjectReceiveRepository.findById(resources.getId()).orElseGet(SysProjectReceive::new);
         ValidationUtil.isNull(sysProjectReceive.getId(), "SysProjectReceive", "id", resources.getId());
         sysProjectReceive.copy(resources);
+        sysProjectReceive.setUpdateBy(ProjectUtils.getCurrentUsername());
         sysProjectTransactionService.updateTransactionByReceive(sysProjectReceiveMapper.toDto(sysProjectReceive), false);
         sysProjectReceiveRepository.saveAndFlush(sysProjectReceive);//确保立即更新，保证updateReceiveAmount中读取到最新数据
         updateReceiveAmount(sysProjectReceive.getProjectId());

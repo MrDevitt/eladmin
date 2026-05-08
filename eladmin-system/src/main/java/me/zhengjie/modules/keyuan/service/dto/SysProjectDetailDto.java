@@ -114,4 +114,8 @@ public class SysProjectDetailDto implements Serializable {
      * 项目进度
      */
     private Integer projectProgress;
+
+    private String createBy;
+
+    private String updateBy;
 }

@@ -84,6 +84,15 @@ public class SysProjectReceive implements Serializable {
     @ApiModelProperty(value = "记录修改的时间")
     private Timestamp updateTime;
 
+
+    @Column(name = "`create_by`")
+    @ApiModelProperty(value = "创建人")
+    private String createBy;
+
+    @Column(name = "`update_by`")
+    @ApiModelProperty(value = "修改人")
+    private String updateBy;
+
     public void copy(SysProjectReceive source) {
         BeanUtil.copyProperties(source, this, CopyOptions.create().setIgnoreNullValue(true));
     }

@@ -285,7 +285,7 @@ public class SysProjectDetailTask {
         SalesStatisticMessageConfig salesStatisticMessageConfig = sysProjectConfigService.findConfigByKey(ProjectUtils.PROJECT_CONFIG_KEY_SALES_STATISTICS_MESSAGE, SalesStatisticMessageConfig.class);
         Map<Long, JSONObject> messageMap = new HashMap<>();
         Calendar lastWeek = Calendar.getInstance();
-        lastWeek.add(Calendar.WEEK_OF_YEAR, -1);
+        lastWeek.add(Calendar.DATE, -7);
         SimpleDateFormat formatter = new SimpleDateFormat("MM-dd");
 
         SysProjectPersonQueryCriteria personQueryCriteria = new SysProjectPersonQueryCriteria();

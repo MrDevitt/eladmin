@@ -160,6 +160,14 @@ public class SysProjectDetail implements Serializable {
     @ApiModelProperty(value = "项目进度")
     private Integer projectProgress;
 
+    @Column(name = "`create_by`")
+    @ApiModelProperty(value = "创建人")
+    private String createBy;
+
+    @Column(name = "`update_by`")
+    @ApiModelProperty(value = "修改人")
+    private String updateBy;
+
     public void copy(SysProjectDetail source) {
         BeanUtil.copyProperties(source, this, CopyOptions.create().setIgnoreNullValue(true));
     }

@@ -66,4 +66,8 @@ public class SysProjectReceiveDto implements Serializable {
      * 记录修改的时间
      */
     private Timestamp updateTime;
+
+    private String createBy;
+
+    private String updateBy;
 }
